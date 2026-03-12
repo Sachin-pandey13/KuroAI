@@ -1,0 +1,28 @@
+style_anchor: kuroai_manga_v1
+
+base_style:
+  description: "high-contrast black-and-white manga illustration"
+  linework: "sharp inked outlines"
+  shading: "dramatic shadows, heavy blacks"
+
+camera_angles:
+  - close-up
+  - medium shot
+  - wide shot
+  - low angle
+  - high angle
+
+lighting:
+  - dramatic side lighting
+  - neon rim light
+  - low-key lighting
+  - backlit silhouette
+
+negative_prompt:
+  - low quality
+  - blurry
+  - distorted anatomy
+  - extra limbs
+  - bad proportions
+  - text
+  - watermark

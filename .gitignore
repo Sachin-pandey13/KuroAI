@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Model weights
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# Large ML model folders
+models/
+weights/
+
+# Generated outputs
+outputs/
+generated/
+results/
+
+# Environment variables
+.env

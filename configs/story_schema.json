@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["title", "genre", "characters", "scenes"],
+  "properties": {
+    "title": { "type": "string" },
+    "genre": { "type": "string" },
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "role", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "scene_id",
+          "setting",
+          "action",
+          "emotion",
+          "visual_prompt"
+        ],
+        "properties": {
+          "scene_id": { "type": "integer" },
+          "setting": { "type": "string" },
+          "action": { "type": "string" },
+          "emotion": { "type": "string" },
+          "visual_prompt": { "type": "string" }
+        }
+      }
+    }
+  }
+}
