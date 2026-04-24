@@ -34,7 +34,18 @@
           "setting": { "type": "string" },
           "action": { "type": "string" },
           "emotion": { "type": "string" },
-          "visual_prompt": { "type": "string" }
+          "visual_prompt": { "type": "string" },
+          "dialogue": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["speaker", "text"],
+              "properties": {
+                "speaker": { "type": "string" },
+                "text": { "type": "string" }
+              }
+            }
+          }
         }
       }
     }

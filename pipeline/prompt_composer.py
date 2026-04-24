@@ -1,80 +1,92 @@
 # pipeline/prompt_composer.py
 
 class PromptComposer:
+
     def __init__(self):
+
+        # Character identity anchors
+        self.hero_identity = (
+            "Akira, lean anime fighter, messy black hair, sharp eyes, red scarf"
+        )
+
+        self.villain_identity = (
+            "Gorath, huge armored villain, bulky body, dark armor, glowing red eyes"
+        )
+
         self.emotion_map = {
-            "loneliness": "isolated subject, empty environment, distant framing, solitude atmosphere",
-            "sadness": "downcast posture, melancholic mood, soft shadows",
-            "anger": "tense posture, sharp contrast lighting, dramatic shadows",
-            "determination": "strong stance, forward motion, dynamic composition",
-            "fear": "dramatic lighting, heavy shadows, tense atmosphere",
-            "hope": "soft glow lighting, upward gaze, gentle contrast"
+            "loneliness": "isolated atmosphere",
+            "sadness": "melancholic mood",
+            "anger": "aggressive stance",
+            "determination": "confident stance",
+            "fear": "tense atmosphere",
+            "hope": "calm confident mood",
+            "battle": "dynamic action scene"
         }
 
         self.camera_map = {
-            "wide angle": "cinematic wide shot, subject small in frame",
-            "close up": "close-up shot, facial focus",
-            "medium shot": "medium framing, character centered",
-            "low angle": "low angle shot, powerful perspective",
-            "high angle": "high angle shot, vulnerability perspective"
+            "wide angle": "wide cinematic shot showing full environment",
+            "medium shot": "mid shot showing characters and surroundings",
+            "close up": "close-up facial detail",
+            "low angle": "low angle cinematic shot",
+            "high angle": "high angle cinematic shot"
         }
 
         self.lighting_map = {
-            "neon": "cyberpunk neon lighting, glowing reflections",
-            "neon rain": "neon lighting, rain reflections, wet streets",
-            "dim": "low light, ambient shadows",
-            "dramatic": "high contrast lighting, cinematic shadows",
-            "soft": "soft diffused lighting"
+            "neon": "cyberpunk neon lighting",
+            "dim": "dim dramatic lighting",
+            "dramatic": "high contrast cinematic lighting",
+            "soft": "soft lighting"
         }
 
-        # Style always last for consistency
         self.global_style = (
-            "black and white manga style, clean lineart, detailed ink shading, "
-            "cinematic composition, high quality"
+            "manga panel composition, black and white manga style, "
+            "clean ink lineart, detailed shading, cinematic composition"
         )
 
         self.negative_prompt = (
             "low quality, blurry, distorted anatomy, extra limbs, bad hands, "
-            "watermark, text, logo, cropped, deformed face"
+            "watermark, text, logo"
         )
 
     def compose(self, scene: dict) -> dict:
-        emotion_tokens = self.emotion_map.get(
-            scene.get("emotion", "").lower(),
-            ""
-        )
-
-        camera_tokens = self.camera_map.get(
-            scene.get("camera", "").lower(),
-            ""
-        )
-
-        lighting_tokens = self.lighting_map.get(
-            scene.get("lighting", "").lower(),
-            scene.get("lighting", "")
-        )
 
         base_visual = scene.get("visual_prompt", "")
         description = scene.get("description", "")
 
-        # Order matters for stability:
-        # 1. Base visual description
-        # 2. Scene description
-        # 3. Emotion
-        # 4. Camera
-        # 5. Lighting
-        # 6. Global style
-
-        prompt = ", ".join(
-            filter(None, [
-                base_visual,
-                description,
-                emotion_tokens,
-                camera_tokens,
-                lighting_tokens,
-                self.global_style
-            ])
+        emotion_tokens = self.emotion_map.get(
+            scene.get("emotion", "").lower(), ""
         )
+
+        camera_tokens = self.camera_map.get(
+            scene.get("camera", "").lower(), "wide cinematic shot"
+        )
+
+        lighting_tokens = self.lighting_map.get(
+            scene.get("lighting", "").lower(), ""
+        )
+
+        # detect if scene contains both characters
+        visual_lower = base_visual.lower()
+
+        if "gorath" in visual_lower or "villain" in visual_lower or "fight" in visual_lower:
+            character_block = (
+                f"{self.hero_identity} fighting {self.villain_identity}, both characters visible"
+            )
+            camera_tokens = "wide cinematic shot, full body action scene"
+        else:
+            character_block = f"{self.hero_identity}"
+
+        prompt_parts = [
+            character_block,
+            base_visual,
+            description,
+            emotion_tokens,
+            camera_tokens,
+            lighting_tokens,
+            self.global_style
+        ]
+
+        prompt = ", ".join(filter(None, prompt_parts))
 
         return {
             "prompt": prompt,

@@ -1,0 +1,174 @@
+/* Template Page */
+.template-page-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+  margin-top: 5rem;
+}
+
+.template-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ccc;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.back-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.story-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #00d2ff, #ff00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 210, 255, 0.2);
+}
+
+.download-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.instructions {
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px solid rgba(0, 210, 255, 0.15);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  color: #a0d0e0;
+  font-size: 0.9rem;
+}
+
+.template-workspace {
+  display: flex;
+  justify-content: center;
+}
+
+.manga-canvas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  background: rgba(10, 10, 16, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.manga-panel-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+  min-height: 300px;
+}
+
+.manga-panel-container:hover {
+  border-color: rgba(0, 210, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 210, 255, 0.1);
+}
+
+.manga-panel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Speech Bubbles */
+.speech-bubble {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  max-width: 200px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  z-index: 10;
+  transition: box-shadow 0.2s ease;
+}
+
+.speech-bubble:active {
+  cursor: grabbing;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 12px solid rgba(255, 255, 255, 0.95);
+}
+
+.bubble-speaker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #3a7bd5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.bubble-text {
+  font-size: 0.85rem;
+  color: #222;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .manga-canvas {
+    grid-template-columns: 1fr;
+  }
+  .template-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
