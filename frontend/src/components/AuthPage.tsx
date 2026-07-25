@@ -15,7 +15,7 @@ const AuthPage = ({ onAuthSuccess, onGoHome }: AuthPageProps) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = 'http://localhost:8000/api/auth';
+  const API_BASE = 'http://localhost:8080/api/auth';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

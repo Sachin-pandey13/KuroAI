@@ -1,12 +1,19 @@
 # inference/stability_image_adapter.py
 
-import torch
-from diffusers import StableDiffusionPipeline
 from PIL import Image
 
 
 class StabilityImageAdapter:
     def __init__(self):
+        try:
+            import torch
+            from diffusers import StableDiffusionPipeline
+        except ImportError as e:
+            raise ImportError(
+                "PyTorch/Diffusers packages are not installed. "
+                "Install with `pip install diffusers torch transformers` to use local Stable Diffusion model."
+            ) from e
+
         model_path = "models/sd15/model.safetensors"
 
         self.pipe = StableDiffusionPipeline.from_single_file(
@@ -17,6 +24,8 @@ class StabilityImageAdapter:
         self.pipe.enable_attention_slicing()
 
     def generate(self, prompt: str, seed: int = None) -> Image.Image:
+        import torch
+
         generator = None
 
         if seed is not None:
@@ -31,4 +40,4 @@ class StabilityImageAdapter:
 
         torch.cuda.empty_cache()
 
-        return image
+        return image

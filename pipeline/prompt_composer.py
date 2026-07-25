@@ -65,19 +65,22 @@ class PromptComposer:
             scene.get("lighting", "").lower(), ""
         )
 
-        # detect if scene contains both characters
-        visual_lower = base_visual.lower()
-
-        if "gorath" in visual_lower or "villain" in visual_lower or "fight" in visual_lower:
-            character_block = (
-                f"{self.hero_identity} fighting {self.villain_identity}, both characters visible"
-            )
-            camera_tokens = "wide cinematic shot, full body action scene"
+        # Detect character dynamic data
+        villain_data = scene.get("villain")
+        if villain_data:
+            villain_name = villain_data.get("name", "Gorath")
+            villain_desc = f"{villain_name}, {villain_data.get('build', '')}, {villain_data.get('eyes', '')}"
         else:
-            character_block = f"{self.hero_identity}"
+            villain_desc = self.villain_identity
+
+        visual_lower = base_visual.lower()
+        character_action_block = ""
+        if "gorath" in visual_lower or "villain" in visual_lower or "fight" in visual_lower or "battle" in visual_lower or "clash" in visual_lower:
+            character_action_block = f"fighting {villain_desc}, both characters visible"
+            camera_tokens = "wide cinematic shot, full body action scene"
 
         prompt_parts = [
-            character_block,
+            character_action_block,
             base_visual,
             description,
             emotion_tokens,

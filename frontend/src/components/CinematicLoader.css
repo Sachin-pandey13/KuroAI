@@ -1,0 +1,131 @@
+/* ═══════════════════════════════════════════════
+   CINEMATIC LOADER
+═══════════════════════════════════════════════ */
+.cinematic-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.loader-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+}
+
+.loader-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loader-logo {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 0 20px rgba(255, 0, 255, 0.6));
+}
+
+.loader-brand {
+  display: flex;
+  gap: 0.05em;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.loader-char {
+  background: linear-gradient(135deg, #ffffff, #ff00ff, #7b2ff7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+}
+
+.loader-tagline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.loader-progress-container {
+  width: clamp(280px, 40vw, 480px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.loader-progress-track {
+  position: relative;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: visible;
+}
+
+.loader-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7b2ff7, #ff00ff);
+  border-radius: 2px;
+  transition: width 0.05s linear;
+  position: relative;
+}
+
+.loader-progress-glow {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ff00ff;
+  box-shadow: 0 0 18px 6px rgba(255, 0, 255, 0.9);
+  transition: left 0.05s linear;
+}
+
+.loader-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.05em;
+}
+
+.loader-progress-label span:first-child {
+  color: #ff00ff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.loader-status {
+  animation: statusPulse 1s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Corner decorations */
+.loader-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+}
+.loader-corner--tl { top: 24px; left: 24px; }
+.loader-corner--tr { top: 24px; right: 24px; transform: rotate(90deg); }
+.loader-corner--bl { bottom: 24px; left: 24px; transform: rotate(-90deg); }
+.loader-corner--br { bottom: 24px; right: 24px; transform: rotate(180deg); }
