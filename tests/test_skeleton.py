@@ -90,10 +90,19 @@ class TestEngineSkeletons:
         assert ctx.action_type == "DRAFT_SCENE"
 
     def test_scheduler_imports(self):
+        """TaskScheduler is fully implemented (Milestone 7) — dispatch_next dispatches ready tasks."""
         from backend.engine.scheduler import TaskScheduler
-        scheduler = TaskScheduler()
-        with pytest.raises(NotImplementedError):
-            scheduler.dispatch_next()
+        from backend.engine.task_registry import TaskRegistry
+        from backend.engine.dependency_graph import DependencyGraph
+        from backend.contracts.task import Task
+        t_reg = TaskRegistry()
+        d_graph = DependencyGraph()
+        scheduler = TaskScheduler(task_registry=t_reg, dependency_graph=d_graph)
+        task = Task(goal_id="g1", target_agent_type="STORY", action_type="DRAFT")
+        scheduler.schedule_task(task)
+        dispatched = scheduler.dispatch_next()
+        assert dispatched is not None
+        assert dispatched.task_id == task.task_id
 
 
 class TestCapabilitySkeletons:
