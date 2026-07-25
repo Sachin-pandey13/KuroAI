@@ -117,6 +117,27 @@ class TestArtifactContract:
         assert artifact.artifact_id is not None
         assert artifact.current_version == 1
         assert artifact.artifact_type == ArtifactType.CHARACTER_PROFILE
+        assert artifact.parent_artifact_id is None
+        assert artifact.child_artifact_ids == []
+
+    def test_artifact_lineage_fields(self):
+        from backend.contracts.artifact import Artifact, ArtifactType
+        parent = Artifact(
+            project_id="proj-001",
+            artifact_type=ArtifactType.STORY_OUTLINE,
+            owner_agent="story_agent",
+        )
+        child = Artifact(
+            project_id="proj-001",
+            artifact_type=ArtifactType.SCENE_SCRIPT,
+            owner_agent="story_agent",
+            parent_artifact_id=parent.artifact_id,
+            upstream_dependencies=[parent.artifact_id],
+        )
+        parent.child_artifact_ids.append(child.artifact_id)
+        assert child.parent_artifact_id == parent.artifact_id
+        assert parent.child_artifact_ids == [child.artifact_id]
+        assert child.upstream_dependencies == [parent.artifact_id]
 
 
 class TestDependencyContract:

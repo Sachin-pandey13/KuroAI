@@ -30,6 +30,11 @@ class Artifact(BaseModel):
     First-class project artifact representing a node in the Dependency Graph and Version Graph.
     The ArtifactRegistry owns artifact lifecycle.
     The ProjectStateEngine references artifacts by ID.
+    Every artifact knows its lineage:
+      - parent_artifact_id ("Who created me?")
+      - child_artifact_ids ("Who did I produce?")
+      - upstream_dependencies ("What do I depend on?")
+      - downstream_dependents ("Who depends on me?")
     """
     artifact_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     project_id: str
@@ -39,6 +44,8 @@ class Artifact(BaseModel):
     current_version: int = 1
     data: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    parent_artifact_id: Optional[str] = None
+    child_artifact_ids: List[str] = Field(default_factory=list)
     upstream_dependencies: List[str] = Field(default_factory=list)
     downstream_dependents: List[str] = Field(default_factory=list)
     decision_trace: Optional[DecisionTrace] = None
