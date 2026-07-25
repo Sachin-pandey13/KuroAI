@@ -27,7 +27,7 @@ class CreativeGoal(BaseModel):
     goal_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str
-    target_milestone: str
+    target_milestone: str = "M1"
     priority: GoalPriority = GoalPriority.MEDIUM
     status: GoalStatus = GoalStatus.PENDING
     constraints: Dict[str, Any] = Field(default_factory=dict)

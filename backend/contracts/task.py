@@ -21,7 +21,7 @@ class Task(BaseModel):
     task_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     goal_id: str
     target_agent_type: str
-    action_type: str
+    action_type: str = "EXECUTE"
     status: TaskStatus = TaskStatus.QUEUED
     payload: Dict[str, Any] = Field(default_factory=dict)
     required_dependencies: List[str] = Field(default_factory=list)

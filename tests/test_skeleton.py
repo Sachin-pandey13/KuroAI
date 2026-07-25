@@ -78,10 +78,16 @@ class TestEngineSkeletons:
         assert received[0].project_id == "p1"
 
     def test_context_engine_imports(self):
+        """ContextEngine is fully implemented (Milestone 6) — build_context returns an AgentContext."""
         from backend.engine.context_engine import ContextEngine
+        from backend.contracts.task import Task
+        from backend.contracts.context import AgentContext
         engine = ContextEngine()
-        with pytest.raises(NotImplementedError):
-            engine.build_context(None)
+        task = Task(goal_id="g1", target_agent_type="STORY", action_type="DRAFT_SCENE")
+        ctx = engine.build_context(task)
+        assert isinstance(ctx, AgentContext)
+        assert ctx.target_agent_type == "STORY"
+        assert ctx.action_type == "DRAFT_SCENE"
 
     def test_scheduler_imports(self):
         from backend.engine.scheduler import TaskScheduler
