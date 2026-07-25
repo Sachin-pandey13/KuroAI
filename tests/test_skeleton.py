@@ -37,14 +37,14 @@ class TestEngineSkeletons:
     def test_dependency_graph_imports(self):
         from backend.engine.dependency_graph import DependencyGraph
         graph = DependencyGraph()
-        with pytest.raises(NotImplementedError):
-            graph.add_node(None)
+        assert graph.node_count == 0
 
-    def test_dependency_graph_invalidate_stub(self):
+    def test_dependency_graph_invalidate(self):
         from backend.engine.dependency_graph import DependencyGraph
         graph = DependencyGraph()
-        with pytest.raises(NotImplementedError):
-            graph.invalidate("art-001", "hairstyle changed")
+        graph.create_node("art-001", "STORY_OUTLINE")
+        invalidated = graph.invalidate("art-001", "hairstyle changed")
+        assert isinstance(invalidated, set)
 
     def test_version_graph_imports(self):
         from backend.engine.version_graph import VersionGraph
