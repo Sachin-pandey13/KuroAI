@@ -107,10 +107,22 @@ class TestEngineSkeletons:
 
 class TestCapabilitySkeletons:
     def test_registry_imports(self):
+        """CapabilityRegistry is fully implemented (M8) — resolves MockTextProvider correctly."""
         from backend.capabilities.registry import CapabilityRegistry
-        registry = CapabilityRegistry()
-        with pytest.raises(NotImplementedError):
-            registry.list_capabilities()
+        from backend.capabilities.providers.mock_text_provider import MockTextProvider
+        from backend.contracts.capability import CapabilityType, ToolRequest
+
+        reg = CapabilityRegistry()
+        reg.register_provider(CapabilityType.GENERATE_TEXT, MockTextProvider())
+
+        request = ToolRequest(
+            capability_type=CapabilityType.GENERATE_TEXT,
+            parameters={"prompt": "test"},
+        )
+        resolved = reg.resolve(request)
+        assert resolved.capability_type == CapabilityType.GENERATE_TEXT
+        assert resolved.provider_name == "mock_text_provider"
+
 
     def test_base_provider_is_abstract(self):
         from backend.capabilities.providers.base_provider import BaseProvider
