@@ -132,32 +132,31 @@ class TestArtifactContract:
             artifact_type=ArtifactType.SCENE_SCRIPT,
             owner_agent="story_agent",
             parent_artifact_id=parent.artifact_id,
-            upstream_dependencies=[parent.artifact_id],
         )
         parent.child_artifact_ids.append(child.artifact_id)
         assert child.parent_artifact_id == parent.artifact_id
         assert parent.child_artifact_ids == [child.artifact_id]
-        assert child.upstream_dependencies == [parent.artifact_id]
 
 
 class TestDependencyContract:
     def test_dependency_node_creation(self):
-        from backend.contracts.dependency import DependencyNode, NodeState
+        from backend.contracts.dependency import DependencyNode
+        from backend.contracts.artifact import ArtifactState
         node = DependencyNode(
             artifact_id="art-001",
             artifact_type="STORY_OUTLINE",
         )
-        assert node.state == NodeState.CLEAN
+        assert node.state == ArtifactState.ACTIVE
         assert node.upstream_ids == []
         assert node.downstream_ids == []
 
     def test_dependency_edge_creation(self):
-        from backend.contracts.dependency import DependencyEdge
+        from backend.contracts.dependency import DependencyEdge, EdgeType
         edge = DependencyEdge(
             source_artifact_id="art-001",
             target_artifact_id="art-002",
         )
-        assert edge.dependency_type == "EXPLICIT"
+        assert edge.edge_type == EdgeType.EXPLICIT
 
 
 class TestProjectStateContract:

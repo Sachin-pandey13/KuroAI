@@ -1,6 +1,6 @@
 from typing import Optional, Dict, List, Any
 from datetime import datetime
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactStatus
+from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 
 
 class ArtifactNotFoundError(Exception):
@@ -75,12 +75,16 @@ class ArtifactRegistry:
         artifact.updated_at = datetime.utcnow()
         return artifact
 
-    def update_status(self, artifact_id: str, status: ArtifactStatus) -> Artifact:
-        """Update the lifecycle status of an artifact."""
+    def update_state(self, artifact_id: str, state: ArtifactState) -> Artifact:
+        """Update the lifecycle state of an artifact."""
         artifact = self.get(artifact_id)
-        artifact.status = status
+        artifact.state = state
         artifact.updated_at = datetime.utcnow()
         return artifact
+
+    def update_status(self, artifact_id: str, status: ArtifactState) -> Artifact:
+        """Alias for update_state."""
+        return self.update_state(artifact_id, status)
 
     def list_by_type(self, artifact_type: ArtifactType) -> List[Artifact]:
         """List all artifacts matching an ArtifactType."""

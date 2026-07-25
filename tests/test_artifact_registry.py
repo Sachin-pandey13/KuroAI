@@ -14,7 +14,7 @@ from backend.engine.artifact_registry import (
     ArtifactNotFoundError,
     ArtifactAlreadyExistsError,
 )
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactStatus
+from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 
 
 @pytest.fixture
@@ -108,13 +108,16 @@ class TestUpdateData:
         assert artifact.data["name"] == "Kuro"  # preserved
 
 
-class TestUpdateStatus:
-    def test_update_status(self, registry, sample_character):
+from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
+
+
+class TestUpdateState:
+    def test_update_state(self, registry, sample_character):
         registry.register(sample_character)
-        assert sample_character.status == ArtifactStatus.DRAFT
-        registry.update_status(sample_character.artifact_id, ArtifactStatus.ACTIVE)
+        assert sample_character.state == ArtifactState.DRAFT
+        registry.update_state(sample_character.artifact_id, ArtifactState.ACTIVE)
         artifact = registry.get(sample_character.artifact_id)
-        assert artifact.status == ArtifactStatus.ACTIVE
+        assert artifact.state == ArtifactState.ACTIVE
 
 
 class TestListByType:

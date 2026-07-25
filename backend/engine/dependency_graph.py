@@ -1,5 +1,6 @@
 from typing import List, Set, Optional
-from backend.contracts.dependency import DependencyNode, DependencyEdge, NodeState
+from backend.contracts.dependency import DependencyNode, DependencyEdge
+from backend.contracts.artifact import ArtifactState
 
 
 class DependencyGraph:
