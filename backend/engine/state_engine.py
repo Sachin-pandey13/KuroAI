@@ -2,6 +2,7 @@ from typing import Optional, Dict, Any, List, Set
 from datetime import datetime
 from backend.contracts.project_state import ProjectStateModel, AutonomyLevel
 from backend.contracts.goal import CreativeGoal, GoalStatus
+from backend.contracts.event import Event, EventType
 from backend.engine.artifact_registry import ArtifactRegistry, ArtifactNotFoundError
 
 
@@ -33,8 +34,9 @@ class ProjectStateEngine:
         ProjectStateEngine.attach_artifact(artifact_id) → project references it
     """
 
-    def __init__(self, artifact_registry: ArtifactRegistry) -> None:
+    def __init__(self, artifact_registry: ArtifactRegistry, event_bus: Optional[Any] = None) -> None:
         self._artifact_registry = artifact_registry
+        self._event_bus = event_bus
         self._projects: Dict[str, ProjectStateModel] = {}
         self._active_project_id: Optional[str] = None
         # Track which artifact IDs are attached to each project
@@ -80,6 +82,14 @@ class ProjectStateEngine:
         state = self.get_state()
         state.active_goals.append(goal)
         state.updated_at = datetime.utcnow()
+        if self._event_bus:
+            self._event_bus.publish(
+                Event(
+                    event_type=EventType.GOAL_PUBLISHED,
+                    project_id=state.project_id,
+                    payload={"goal_id": goal.goal_id, "title": goal.title},
+                )
+            )
 
     def update_goal_status(self, goal_id: str, status: GoalStatus) -> CreativeGoal:
         """Update the status of a goal in the active project."""
@@ -89,6 +99,14 @@ class ProjectStateEngine:
                 goal.status = status
                 goal.updated_at = datetime.utcnow()
                 state.updated_at = datetime.utcnow()
+                if self._event_bus:
+                    self._event_bus.publish(
+                        Event(
+                            event_type=EventType.GOAL_UPDATED,
+                            project_id=state.project_id,
+                            payload={"goal_id": goal_id, "status": status.value if hasattr(status, "value") else str(status)},
+                        )
+                    )
                 return goal
         raise ValueError(f"Goal '{goal_id}' not found in active project.")
 
@@ -160,24 +178,43 @@ class ProjectStateEngine:
         state.version += 1
         state.updated_at = datetime.utcnow()
 
-    # --- Transaction Stubs (interface defined now, implementation in future milestone) ---
+        if self._event_bus:
+            self._event_bus.publish(
+                Event(
+                    event_type=EventType.STATE_DELTA_MUTATED,
+                    project_id=state.project_id,
+                    payload={"version": state.version, "delta": delta},
+                )
+            )
+
+    def register_listeners(self, bus: Any) -> None:
+        """Register ProjectStateEngine reactions on the EventBus."""
+        bus.subscribe(EventType.STATE_DELTA_MUTATED, self._on_state_mutated)
+
+    def unregister_listeners(self, bus: Any) -> None:
+        """Unregister ProjectStateEngine reactions from the EventBus."""
+        bus.unsubscribe(EventType.STATE_DELTA_MUTATED, self._on_state_mutated)
+
+    def _on_state_mutated(self, event: Event) -> None:
+        """Observe state mutation events."""
+        pass
+
+    # --- Transaction Stubs ---
 
     def begin_transaction(self) -> None:
-        """Begin an atomic state transaction. (Stub for future implementation.)"""
-        # Future: snapshot current state for rollback
+        """Begin an atomic state transaction."""
         pass
 
     def commit(self) -> None:
-        """Commit the current transaction. (Stub for future implementation.)"""
-        # Future: finalize state changes
+        """Commit the current transaction."""
         pass
 
     def rollback_transaction(self) -> None:
-        """Rollback the current transaction. (Stub for future implementation.)"""
-        # Future: restore state from snapshot
+        """Rollback the current transaction."""
         pass
 
     @property
     def project_count(self) -> int:
         """Return total number of managed projects."""
         return len(self._projects)
+

@@ -1,8 +1,10 @@
-from typing import List, Set, Dict, Optional, Tuple
+import copy
+from typing import List, Set, Dict, Optional, Tuple, Any
 from datetime import datetime
 from collections import deque
 from backend.contracts.dependency import DependencyNode, DependencyEdge, EdgeType
 from backend.contracts.artifact import ArtifactState, ArtifactType
+from backend.contracts.event import Event, EventType
 
 
 class CycleDetectedError(Exception):
@@ -130,12 +132,14 @@ class DependencyGraph:
     - Rejects cycles immediately with CycleDetectedError.
     - Provides topological ordering for scheduler execution.
     - Performs selective invalidation: setting descendants STALE while keeping unrelated nodes ACTIVE.
+    - Emits ARTIFACT_INVALIDATED event after invalidation completes.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, event_bus: Optional[Any] = None) -> None:
         self._nodes: Dict[str, DependencyNode] = {}
         self._edges: Set[Tuple[str, str]] = set()  # (source_id, target_id)
         self._edge_metadata: Dict[Tuple[str, str], DependencyEdge] = {}
+        self._event_bus = event_bus
 
     # ------------------------------------------------------------------
     # Stage 1 — Graph Structure & Integrity
@@ -308,13 +312,20 @@ class DependencyGraph:
     # Stage 4 — Selective Invalidation Engine (First Law)
     # ------------------------------------------------------------------
 
-    def invalidate(self, artifact_id: str, reason: str,
-                   caused_by_event: Optional[str] = None) -> Set[str]:
+    def invalidate(
+        self,
+        artifact_id: str,
+        reason: str,
+        caused_by_event: Optional[str] = None,
+        event_bus: Optional[Any] = None,
+        project_id: str = "default_project",
+    ) -> Set[str]:
         """
         Selective Invalidation Engine (First Law).
         Modifies target node, then recursively sets all downstream descendants to STALE.
         Attaches rich InvalidationRecord containing propagation depth and cause.
         Leaves all unrelated nodes ACTIVE.
+        Emits ARTIFACT_INVALIDATED event after completion.
         Returns the set of all invalidated (STALE) artifact IDs.
         """
         from backend.contracts.dependency import InvalidationRecord
@@ -365,6 +376,17 @@ class DependencyGraph:
                     )
                     invalidated.add(child_id)
 
+        bus = event_bus or self._event_bus
+        if bus is not None:
+            bus.publish(
+                Event(
+                    event_type=EventType.ARTIFACT_INVALIDATED,
+                    project_id=project_id,
+                    target_artifact_id=artifact_id,
+                    payload={"reason": reason, "invalidated_ids": list(invalidated)},
+                )
+            )
+
         return invalidated
 
     def mark_active(self, artifact_id: str) -> None:
@@ -380,7 +402,7 @@ class DependencyGraph:
         node.invalidation_reason = reason
 
     # ------------------------------------------------------------------
-    # Stage 5 — Dirty Query Subsystem
+    # Stage 5 — Dirty Query Subsystem & Listener Registration
     # ------------------------------------------------------------------
 
     def get_dirty(self) -> List[DependencyNode]:
@@ -407,6 +429,40 @@ class DependencyGraph:
         """Clear dirty status, setting node to ACTIVE."""
         self.mark_active(artifact_id)
 
+    def register_listeners(self, bus: Any) -> None:
+        """Register DependencyGraph reactions on the EventBus."""
+        bus.subscribe(EventType.ARTIFACT_REGISTERED, self._on_artifact_registered)
+        bus.subscribe(EventType.ARTIFACT_ROLLED_BACK, self._on_artifact_rolled_back)
+        bus.subscribe(EventType.ARTIFACT_UPDATED, self._on_artifact_updated)
+
+    def unregister_listeners(self, bus: Any) -> None:
+        """Unregister DependencyGraph reactions from the EventBus."""
+        bus.unsubscribe(EventType.ARTIFACT_REGISTERED, self._on_artifact_registered)
+        bus.unsubscribe(EventType.ARTIFACT_ROLLED_BACK, self._on_artifact_rolled_back)
+        bus.unsubscribe(EventType.ARTIFACT_UPDATED, self._on_artifact_updated)
+
+    def _on_artifact_registered(self, event: Event) -> None:
+        """Auto-create node when ARTIFACT_REGISTERED event is received."""
+        artifact_id = event.target_artifact_id
+        if artifact_id:
+            art_type = event.payload.get("artifact_type", "UNKNOWN")
+            if not self.has_node(artifact_id):
+                self.create_node(artifact_id, art_type)
+
+    def _on_artifact_rolled_back(self, event: Event) -> None:
+        """Mark downstream descendants STALE when ARTIFACT_ROLLED_BACK event is received."""
+        artifact_id = event.target_artifact_id
+        if artifact_id and self.has_node(artifact_id):
+            reason = event.payload.get("reason", "Rollback performed")
+            self.invalidate(artifact_id, reason=reason, project_id=event.project_id)
+
+    def _on_artifact_updated(self, event: Event) -> None:
+        """Mark downstream descendants STALE when ARTIFACT_UPDATED event is received."""
+        artifact_id = event.target_artifact_id
+        if artifact_id and self.has_node(artifact_id):
+            reason = event.payload.get("reason", "Artifact updated")
+            self.invalidate(artifact_id, reason=reason, project_id=event.project_id)
+
     @property
     def node_count(self) -> int:
         """Total node count."""
@@ -416,3 +472,4 @@ class DependencyGraph:
     def edge_count(self) -> int:
         """Total edge count."""
         return len(self._edges)
+

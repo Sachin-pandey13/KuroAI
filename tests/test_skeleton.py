@@ -67,10 +67,15 @@ class TestEngineSkeletons:
         assert result.rollback_of == 1
 
     def test_event_bus_imports(self):
+        """EventBus is fully implemented (Milestone 5) — publish delivers to listeners."""
         from backend.engine.event_bus import EventBus
+        from backend.contracts.event import Event, EventType
         bus = EventBus()
-        with pytest.raises(NotImplementedError):
-            bus.publish(None)
+        received = []
+        bus.subscribe(EventType.GOAL_PUBLISHED, lambda e: received.append(e))
+        bus.publish(Event(event_type=EventType.GOAL_PUBLISHED, project_id="p1"))
+        assert len(received) == 1
+        assert received[0].project_id == "p1"
 
     def test_context_engine_imports(self):
         from backend.engine.context_engine import ContextEngine

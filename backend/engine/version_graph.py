@@ -2,6 +2,7 @@ import copy
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from backend.contracts.version import VersionEntry, DiffResult
+from backend.contracts.event import Event, EventType
 from backend.engine.artifact_registry import ArtifactRegistry, ArtifactNotFoundError
 from backend.engine.dependency_graph import DependencyGraph, NodeNotFoundError
 
@@ -29,12 +30,13 @@ class VersionGraph:
     - Maintains independent, immutable version timelines per artifact.
     - Performs non-destructive rollbacks (extending history, never deleting).
     - Computes structural field-by-field diffs between any two version snapshots.
-    - Integrates with ArtifactRegistry and DependencyGraph to invalidate downstream STALE nodes on rollback.
+    - Emits ARTIFACT_ROLLED_BACK event after rollback operations complete.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, event_bus: Optional[Any] = None) -> None:
         # artifact_id -> List[VersionEntry] ordered by version_number (1-indexed)
         self._timelines: Dict[str, List[VersionEntry]] = {}
+        self._event_bus = event_bus
 
     # ------------------------------------------------------------------
     # Stage 2 — Version Graph Core Operations
@@ -124,6 +126,8 @@ class VersionGraph:
         target_version: int,
         created_by: str = "human_director",
         reason: Optional[str] = None,
+        event_bus: Optional[Any] = None,
+        project_id: str = "default_project",
     ) -> VersionEntry:
         """
         Non-Destructive Rollback (Third Law).
@@ -134,9 +138,7 @@ class VersionGraph:
            return the current HEAD version without appending a redundant version entry.
         3. For target_version != current HEAD: Create a new version VN+1 containing
            the restored contents of target_version, with rollback_of=target_version.
-
-        History Timeline:
-          V1 -> V2 -> V3 -> Rollback(V1) -> V4 (contents=V1, rollback_of=1)
+        4. Publishes ARTIFACT_ROLLED_BACK event after rollback state is persisted.
         """
         latest = self.get_latest(artifact_id)
 
@@ -162,6 +164,24 @@ class VersionGraph:
             rollback_of=target_version,
         )
 
+        bus = event_bus or self._event_bus
+        if bus is not None:
+            bus.publish(
+                Event(
+                    event_type=EventType.ARTIFACT_ROLLED_BACK,
+                    project_id=project_id,
+                    target_artifact_id=artifact_id,
+                    source_agent_id=created_by,
+                    payload={
+                        "target_version": target_version,
+                        "version_number": new_version.version_number,
+                        "data": new_version.data_snapshot,
+                        "metadata": new_version.metadata_snapshot,
+                        "reason": summary,
+                    },
+                )
+            )
+
         return new_version
 
     # ------------------------------------------------------------------
@@ -171,12 +191,6 @@ class VersionGraph:
     def diff(self, artifact_id: str, version_a: int, version_b: int) -> DiffResult:
         """
         Computes a structural field-by-field comparison of artifact payloads between version_a and version_b.
-
-        Returns DiffResult containing:
-          - added: fields present in B but not in A
-          - removed: fields present in A but not in B
-          - modified: fields present in both with changed values -> {"old": val_a, "new": val_b}
-          - unchanged: field names with identical values
         """
         snap_a = self.get_version(artifact_id, version_a).data_snapshot
         snap_b = self.get_version(artifact_id, version_b).data_snapshot
@@ -212,7 +226,7 @@ class VersionGraph:
         )
 
     # ------------------------------------------------------------------
-    # Stage 5 — Subsystem Integration Helper
+    # Stage 5 — Subsystem Integration Helper & Event Listeners
     # ------------------------------------------------------------------
 
     def rollback_and_invalidate(
@@ -223,14 +237,20 @@ class VersionGraph:
         dependency_graph: DependencyGraph,
         created_by: str = "human_director",
         reason: Optional[str] = None,
+        event_bus: Optional[Any] = None,
     ) -> VersionEntry:
         """
         Integrated Rollback Helper:
-        1. Executes non-destructive rollback in VersionGraph.
+        1. Executes non-destructive rollback in VersionGraph (publishing ARTIFACT_ROLLED_BACK if bus present).
         2. Updates payload and version in ArtifactRegistry.
         3. Triggers DependencyGraph invalidation, recursively marking downstream nodes STALE.
         """
         rollback_reason = reason or f"Rollback to Version {target_version}"
+
+        # Determine project_id if artifact exists
+        project_id = "default_project"
+        if artifact_registry.exists(artifact_id):
+            project_id = artifact_registry.get(artifact_id).project_id
 
         # 1. Rollback in Version Graph
         new_version = self.rollback(
@@ -238,9 +258,11 @@ class VersionGraph:
             target_version=target_version,
             created_by=created_by,
             reason=rollback_reason,
+            event_bus=event_bus,
+            project_id=project_id,
         )
 
-        # 2. Update Artifact Registry
+        # 2. Update Artifact Registry (if listeners didn't do it via bus)
         if artifact_registry.exists(artifact_id):
             artifact = artifact_registry.get(artifact_id)
             artifact.data = copy.deepcopy(new_version.data_snapshot)
@@ -248,8 +270,33 @@ class VersionGraph:
             artifact.current_version = new_version.version_number
             artifact.updated_at = datetime.utcnow()
 
-        # 3. Invalidate Downstream Dependents in Dependency Graph
+        # 3. Invalidate Downstream Dependents in Dependency Graph (if listeners didn't do it)
         if dependency_graph.has_node(artifact_id):
             dependency_graph.invalidate(artifact_id, reason=rollback_reason)
 
         return new_version
+
+    def register_listeners(self, bus: Any) -> None:
+        """Register VersionGraph reactions on the EventBus."""
+        bus.subscribe(EventType.ARTIFACT_UPDATED, self._on_artifact_updated)
+
+    def unregister_listeners(self, bus: Any) -> None:
+        """Unregister VersionGraph reactions from the EventBus."""
+        bus.unsubscribe(EventType.ARTIFACT_UPDATED, self._on_artifact_updated)
+
+    def _on_artifact_updated(self, event: Event) -> None:
+        """Auto-record a new version snapshot when an ARTIFACT_UPDATED event is received."""
+        artifact_id = event.target_artifact_id
+        if artifact_id:
+            data = event.payload.get("data", {})
+            metadata = event.payload.get("metadata", {})
+            created_by = event.source_agent_id or "system"
+            summary = event.payload.get("change_summary", "Auto-recorded update")
+            self.record_version(
+                artifact_id=artifact_id,
+                data=data,
+                metadata=metadata,
+                created_by=created_by,
+                change_summary=summary,
+            )
+
