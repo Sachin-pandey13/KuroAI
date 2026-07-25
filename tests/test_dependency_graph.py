@@ -181,6 +181,30 @@ class TestSelectiveInvalidationAndDirtyQueries:
         assert graph.get_node("Prompt").state == ArtifactState.ACTIVE  # Modified source
         assert graph.get_node("Image").state == ArtifactState.STALE  # Downstream dependent
 
+    def test_invalidation_record_and_depth(self, graph):
+        graph.create_node("Story", "STORY")
+        graph.create_node("Scene", "SCENE")
+        graph.create_node("Prompt", "PROMPT")
+        graph.create_node("Image", "IMAGE")
+
+        graph.connect("Story", "Scene")
+        graph.connect("Scene", "Prompt")
+        graph.connect("Prompt", "Image")
+
+        graph.invalidate("Story", "Story beats changed", caused_by_event="EVENT_USER_EDIT")
+
+        story_rec = graph.get_node("Story").last_invalidation_record
+        assert story_rec.propagation_depth == 0
+        assert story_rec.reason == "Story beats changed"
+
+        scene_rec = graph.get_node("Scene").last_invalidation_record
+        assert scene_rec.propagation_depth == 1
+        assert scene_rec.source_artifact_id == "Story"
+
+        image_rec = graph.get_node("Image").last_invalidation_record
+        assert image_rec.propagation_depth == 3
+        assert image_rec.source_artifact_id == "Story"
+
     def test_dirty_queries(self, graph):
         graph.create_node("Story", "STORY")
         graph.create_node("Prompt", "PROMPT")

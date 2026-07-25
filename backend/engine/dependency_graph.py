@@ -308,32 +308,62 @@ class DependencyGraph:
     # Stage 4 — Selective Invalidation Engine (First Law)
     # ------------------------------------------------------------------
 
-    def invalidate(self, artifact_id: str, reason: str) -> Set[str]:
+    def invalidate(self, artifact_id: str, reason: str,
+                   caused_by_event: Optional[str] = None) -> Set[str]:
         """
         Selective Invalidation Engine (First Law).
         Modifies target node, then recursively sets all downstream descendants to STALE.
+        Attaches rich InvalidationRecord containing propagation depth and cause.
         Leaves all unrelated nodes ACTIVE.
         Returns the set of all invalidated (STALE) artifact IDs.
         """
+        from backend.contracts.dependency import InvalidationRecord
+
         if artifact_id not in self._nodes:
             raise NodeNotFoundError(f"Node '{artifact_id}' not found.")
 
-        # Update the modified source node timestamp/reason
         now = datetime.utcnow()
         source_node = self._nodes[artifact_id]
         source_node.last_invalidated_at = now
         source_node.invalidation_reason = f"Modified: {reason}"
+        source_node.last_invalidation_record = InvalidationRecord(
+            source_artifact_id=artifact_id,
+            affected_artifact_id=artifact_id,
+            reason=reason,
+            propagation_depth=0,
+            caused_by_event=caused_by_event,
+            timestamp=now,
+        )
 
-        # Find all transitive downstream descendants
-        descendant_ids = self.descendants(artifact_id)
+        # Compute depth using BFS from source node
+        depth_map: Dict[str, int] = {artifact_id: 0}
+        queue = deque([artifact_id])
         invalidated: Set[str] = set()
 
-        for desc_id in descendant_ids:
-            node = self._nodes[desc_id]
-            node.state = ArtifactState.STALE
-            node.last_invalidated_at = now
-            node.invalidation_reason = f"Upstream '{artifact_id}' was updated ({reason})"
-            invalidated.add(desc_id)
+        while queue:
+            curr_id = queue.popleft()
+            curr_depth = depth_map[curr_id]
+
+            for child_id in self._nodes[curr_id].downstream_ids:
+                if child_id in self._nodes:
+                    child_depth = curr_depth + 1
+                    if child_id not in depth_map or child_depth < depth_map[child_id]:
+                        depth_map[child_id] = child_depth
+                        queue.append(child_id)
+
+                    node = self._nodes[child_id]
+                    node.state = ArtifactState.STALE
+                    node.last_invalidated_at = now
+                    node.invalidation_reason = f"Upstream '{artifact_id}' was updated ({reason})"
+                    node.last_invalidation_record = InvalidationRecord(
+                        source_artifact_id=artifact_id,
+                        affected_artifact_id=child_id,
+                        reason=reason,
+                        propagation_depth=depth_map[child_id],
+                        caused_by_event=caused_by_event,
+                        timestamp=now,
+                    )
+                    invalidated.add(child_id)
 
         return invalidated
 
