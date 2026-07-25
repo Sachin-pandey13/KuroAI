@@ -36,6 +36,7 @@ class Task(BaseModel):
     retry_count: int = 0
     max_retries: int = 3
     error_message: Optional[str] = None
+    execution_timeout: Optional[float] = None  # seconds; None = no timeout
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

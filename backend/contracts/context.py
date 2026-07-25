@@ -98,4 +98,9 @@ class AgentContext(BaseModel):
                 return s
         return None
 
+    @property
+    def goal_id(self) -> str:
+        """Convenience helper to extract goal_id from goal dict or fallback to task_id."""
+        return self.goal.get("goal_id", self.task_id)
+
 

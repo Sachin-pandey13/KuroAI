@@ -174,11 +174,12 @@ class TestAgentSkeletons:
 
     @pytest.mark.asyncio
     async def test_agent_execute_raises_not_implemented(self):
-        from backend.agents.story_agent import StoryAgent
+        from backend.agents.character_agent import CharacterAgent
         from backend.contracts.context import AgentContext
-        agent = StoryAgent()
+        agent = CharacterAgent()
         ctx = AgentContext(
-            task_id="t-001", project_id="p-001", target_agent_type="STORY"
+            task_id="t-001", project_id="p-001", target_agent_type="CHARACTER"
         )
         with pytest.raises(NotImplementedError):
             await agent.execute(ctx)
+

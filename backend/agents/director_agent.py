@@ -1,12 +1,14 @@
+from typing import Optional
 from backend.agents.base_agent import BaseAgent
 from backend.contracts.context import AgentContext
 from backend.contracts.agent import AgentResult
+from backend.agents.tool_executor import BaseToolExecutor
 
 
 class DirectorAgent(BaseAgent):
     """
-    Maintains creative vision, scene breakdowns, and style consistency.
-    Publishes high-level creative goals to the Project State Engine.
+    Translates high-level narrative goals into page breakdowns, panel count,
+    camera angles, shot types, and visual pacing decisions.
     """
 
     @property
@@ -17,5 +19,9 @@ class DirectorAgent(BaseAgent):
     def agent_type(self) -> str:
         return "DIRECTOR"
 
-    async def execute(self, context: AgentContext) -> AgentResult:
+    async def execute(
+        self,
+        context: AgentContext,
+        tool_executor: Optional[BaseToolExecutor] = None,
+    ) -> AgentResult:
         raise NotImplementedError("DirectorAgent.execute stub")

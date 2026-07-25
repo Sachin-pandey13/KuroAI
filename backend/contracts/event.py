@@ -13,6 +13,9 @@ class EventType(str, Enum):
     TASK_DISPATCHED = "TASK_DISPATCHED"
     TASK_COMPLETED = "TASK_COMPLETED"
     TASK_FAILED = "TASK_FAILED"
+    AGENT_STARTED = "AGENT_STARTED"
+    AGENT_COMPLETED = "AGENT_COMPLETED"
+    AGENT_FAILED = "AGENT_FAILED"
     ARTIFACT_CREATED = "ARTIFACT_CREATED"
     ARTIFACT_REGISTERED = "ARTIFACT_REGISTERED"
     ARTIFACT_UPDATED = "ARTIFACT_UPDATED"
@@ -27,7 +30,7 @@ class Event(BaseModel):
     """
     event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     event_type: EventType
-    project_id: str
+    project_id: str = "default_project"
     source_agent_id: Optional[str] = None
     target_artifact_id: Optional[str] = None
     payload: Dict[str, Any] = Field(default_factory=dict)
@@ -43,4 +46,3 @@ class EventLog(BaseModel):
     delivered_to: int
     errors: list[str] = Field(default_factory=list)
     logged_at: datetime = Field(default_factory=datetime.utcnow)
-
