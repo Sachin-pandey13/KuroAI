@@ -47,16 +47,24 @@ class TestEngineSkeletons:
         assert isinstance(invalidated, set)
 
     def test_version_graph_imports(self):
+        """VersionGraph is fully implemented (Milestone 4) — record_version returns a VersionEntry."""
         from backend.engine.version_graph import VersionGraph
+        from backend.contracts.version import VersionEntry
         vg = VersionGraph()
-        with pytest.raises(NotImplementedError):
-            vg.record_version("art-001", {}, {})
+        entry = vg.record_version("art-001", {"title": "Draft"}, {}, created_by="test")
+        assert isinstance(entry, VersionEntry)
+        assert entry.version_number == 1
+        assert entry.artifact_id == "art-001"
 
     def test_version_graph_rollback_stub(self):
+        """VersionGraph rollback is fully implemented — rollback creates a new non-destructive version."""
         from backend.engine.version_graph import VersionGraph
         vg = VersionGraph()
-        with pytest.raises(NotImplementedError):
-            vg.rollback("art-001", 1)
+        vg.record_version("art-001", {"title": "V1"}, {})
+        vg.record_version("art-001", {"title": "V2"}, {})
+        result = vg.rollback("art-001", target_version=1)
+        assert result.version_number == 3
+        assert result.rollback_of == 1
 
     def test_event_bus_imports(self):
         from backend.engine.event_bus import EventBus
