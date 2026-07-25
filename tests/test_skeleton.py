@@ -14,21 +14,25 @@ import pytest
 class TestEngineSkeletons:
     def test_state_engine_imports(self):
         from backend.engine.state_engine import ProjectStateEngine
-        engine = ProjectStateEngine()
-        with pytest.raises(NotImplementedError):
-            engine.create_project("Test", "Test project")
+        from backend.engine.artifact_registry import ArtifactRegistry
+        reg = ArtifactRegistry()
+        engine = ProjectStateEngine(artifact_registry=reg)
+        state = engine.create_project("Test", "Test project")
+        assert state.title == "Test"
 
-    def test_state_engine_get_state_stub(self):
+    def test_state_engine_get_state(self):
         from backend.engine.state_engine import ProjectStateEngine
-        engine = ProjectStateEngine()
-        with pytest.raises(NotImplementedError):
-            engine.get_state()
+        from backend.engine.artifact_registry import ArtifactRegistry
+        reg = ArtifactRegistry()
+        engine = ProjectStateEngine(artifact_registry=reg)
+        engine.create_project("Test", "Test project")
+        state = engine.get_state()
+        assert state.title == "Test"
 
     def test_artifact_registry_imports(self):
         from backend.engine.artifact_registry import ArtifactRegistry
         registry = ArtifactRegistry()
-        with pytest.raises(NotImplementedError):
-            registry.register_artifact(None)
+        assert registry.count == 0
 
     def test_dependency_graph_imports(self):
         from backend.engine.dependency_graph import DependencyGraph

@@ -115,7 +115,7 @@ class TestArtifactContract:
             data={"name": "Kuro", "hair": "black"},
         )
         assert artifact.artifact_id is not None
-        assert artifact.version == 1
+        assert artifact.current_version == 1
         assert artifact.artifact_type == ArtifactType.CHARACTER_PROFILE
 
 

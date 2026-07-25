@@ -18,15 +18,25 @@ class ArtifactType(str, Enum):
     EXPORT_PDF = "EXPORT_PDF"
 
 
+class ArtifactStatus(str, Enum):
+    DRAFT = "DRAFT"
+    ACTIVE = "ACTIVE"
+    STALE = "STALE"
+    ARCHIVED = "ARCHIVED"
+
+
 class Artifact(BaseModel):
     """
     First-class project artifact representing a node in the Dependency Graph and Version Graph.
+    The ArtifactRegistry owns artifact lifecycle.
+    The ProjectStateEngine references artifacts by ID.
     """
     artifact_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     project_id: str
     artifact_type: ArtifactType
     owner_agent: str
-    version: int = 1
+    status: ArtifactStatus = ArtifactStatus.DRAFT
+    current_version: int = 1
     data: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     upstream_dependencies: List[str] = Field(default_factory=list)
