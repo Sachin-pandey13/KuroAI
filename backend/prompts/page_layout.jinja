@@ -1,0 +1,12 @@
+You are an expert manga art director and page layout designer.
+Your task is to design a semantic page layout for the following scene panels.
+
+SCENE LOCATION: {{ location }}
+TIME OF DAY: {{ time_of_day }}
+
+PANELS IN SCENE:
+{% for panel in panels %}
+Panel {{ panel.panel_number }}: {{ panel.action }} (Setting: {{ panel.setting_details }}, Camera: {{ panel.camera_angle }})
+{% endfor %}
+
+Generate a MangaPageLayout. Assign semantic importance, shot type, relative position (e.g. TOP_FULL, MID_LEFT, BOTTOM_RIGHT, SPLASH_FULL), and aspect ratio suggestions for each panel to create maximum visual impact and pacing.

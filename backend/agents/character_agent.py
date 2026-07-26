@@ -10,6 +10,7 @@ from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 from backend.contracts.capability import CapabilityType, ToolRequest
 from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.agents.tool_executor import BaseToolExecutor
+from backend.agents.output_parser import OutputParser
 from backend.contracts.character import CharacterProfile
 
 class CharacterAgent(BaseAgent):
@@ -80,20 +81,15 @@ class CharacterAgent(BaseAgent):
             )
 
         text_output = tool_resp.output_data.get("text", "")
-        if text_output.startswith("```json"): text_output = text_output[7:]
-        if text_output.startswith("```"): text_output = text_output[3:]
-        if text_output.endswith("```"): text_output = text_output[:-3]
-        text_output = text_output.strip()
-
-        try:
-            profile = CharacterProfile.model_validate_json(text_output)
-        except ValidationError as e:
+        profile = OutputParser.parse_json(text_output, CharacterProfile)
+        
+        if profile is None:
             return AgentResult(
                 task_id=context.task_id,
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 success=False,
-                error_message=f"JSON validation error: {e}"
+                error_message=f"JSON validation error: failed to parse CharacterProfile from model output."
             )
 
         decision_trace = DecisionTrace(

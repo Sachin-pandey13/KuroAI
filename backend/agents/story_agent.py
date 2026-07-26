@@ -10,6 +10,7 @@ from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 from backend.contracts.capability import CapabilityType, ToolRequest
 from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.agents.tool_executor import BaseToolExecutor
+from backend.agents.output_parser import OutputParser
 from backend.contracts.story import StoryOutline
 
 class StoryAgent(BaseAgent):
@@ -67,24 +68,15 @@ class StoryAgent(BaseAgent):
             )
 
         text_output = tool_resp.output_data.get("text", "")
-        # Clean potential markdown markdown blocks
-        if text_output.startswith("```json"):
-            text_output = text_output[7:]
-        if text_output.startswith("```"):
-            text_output = text_output[3:]
-        if text_output.endswith("```"):
-            text_output = text_output[:-3]
-        text_output = text_output.strip()
-
-        try:
-            story_outline = StoryOutline.model_validate_json(text_output)
-        except ValidationError as e:
+        story_outline = OutputParser.parse_json(text_output, StoryOutline)
+        
+        if story_outline is None:
             return AgentResult(
                 task_id=context.task_id,
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 success=False,
-                error_message=f"JSON validation error: {e}"
+                error_message=f"JSON validation error: failed to parse StoryOutline from model output."
             )
             
         story_outline.project_id = project_id
