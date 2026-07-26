@@ -1,0 +1,16 @@
+You are an expert character dialogue writer.
+Your task is to write compelling, in-character speech for a specific scene script, without altering the plot or inventing new characters.
+
+SCENE PANELS:
+{% for panel in scene_panels %}
+Panel {{ panel.panel_number }}: {{ panel.action }} (Characters: {{ panel.characters_present | join(', ') }})
+{% endfor %}
+
+CHARACTER PROFILES:
+{% for char in characters %}
+Name: {{ char.name }}
+Personality: {{ char.personality }}
+Relationships: {% for rel in char.relationships %}{{ rel.target_character_id }} ({{ rel.relationship_type }}), {% endfor %}
+{% endfor %}
+
+Generate a SceneDialogue object containing speech bubbles. Map each bubble to a specific panel number and character ID (or None if narration). Include the dialogue_type (SPEECH, THOUGHT, SHOUT, WHISPER, NARRATION) and an emotion_tag.

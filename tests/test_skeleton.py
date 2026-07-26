@@ -180,6 +180,8 @@ class TestAgentSkeletons:
         ctx = AgentContext(
             task_id="t-001", project_id="p-001", target_agent_type="CHARACTER"
         )
-        with pytest.raises(NotImplementedError):
-            await agent.execute(ctx)
+        # CharacterAgent is now fully implemented; without a tool_executor it returns success=False
+        result = await agent.execute(ctx, tool_executor=None)
+        assert result.success is False
+        assert "No tool executor" in result.error_message
 

@@ -10,20 +10,20 @@ from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 from backend.contracts.capability import CapabilityType, ToolRequest
 from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.agents.tool_executor import BaseToolExecutor
-from backend.contracts.story import StoryOutline
+from backend.contracts.scene import SceneScript
 
-class StoryAgent(BaseAgent):
+class ScenePlannerAgent(BaseAgent):
     """
-    Drafts high-level story outlines using Jinja templates and JSON mode.
+    Expands a StoryBeat into a detailed SceneScript containing panel descriptions.
     """
 
     @property
     def agent_id(self) -> str:
-        return "story_agent"
+        return "scene_planner_agent"
 
     @property
     def agent_type(self) -> str:
-        return "STORY"
+        return "SCENE_PLANNER"
 
     async def execute(
         self,
@@ -34,22 +34,28 @@ class StoryAgent(BaseAgent):
             return AgentResult(task_id=context.task_id, agent_id=self.agent_id, agent_type=self.agent_type, success=False, error_message="No tool executor provided")
 
         project_id = "default_project"
-        user_prompt = ""
-        director_brief = ""
+        story_beat = ""
+        parent_artifact_ids = []
         
         for sec in context.sections:
-            if sec.section_type == ContextSectionType.GOAL and isinstance(sec.content, dict):
-                user_prompt = sec.content.get("prompt", str(sec.content))
-                project_id = sec.content.get("project_id", project_id)
-            elif sec.section_type == ContextSectionType.DIRECTOR_BRIEF:
-                director_brief = str(sec.content)
+            if sec.section_type == ContextSectionType.ARTIFACT and isinstance(sec.content, dict):
+                # Look for a StoryOutline or StoryBeat
+                if sec.content.get("artifact_type") == ArtifactType.STORY_OUTLINE.value:
+                    project_id = sec.content.get("project_id", project_id)
+                    parent_artifact_ids.append(sec.content.get("artifact_id"))
+                    # In a real scenario, the TaskScheduler would pass a specific beat.
+                    # For now, we take the whole outline or a summary.
+                    story_beat = str(sec.content.get("data", {}))
+
+        if not story_beat:
+            # Fallback for testing
+            story_beat = "Default story beat text."
 
         env = Environment(loader=FileSystemLoader(os.path.join("backend", "prompts")))
-        template = env.get_template("story_outline.jinja")
-        prompt = template.render(user_prompt=user_prompt, director_brief=director_brief)
+        template = env.get_template("scene_script.jinja")
+        prompt = template.render(story_beat=story_beat)
         
-        # We append JSON instructions since we don't have native response_format integrated in providers yet
-        prompt += f"\n\nYou MUST return a valid JSON object adhering to this JSON schema:\n{StoryOutline.model_json_schema()}"
+        prompt += f"\n\nYou MUST return a valid JSON object adhering to this JSON schema:\n{SceneScript.model_json_schema()}"
 
         tool_req = ToolRequest(
             capability_type=CapabilityType.GENERATE_TEXT,
@@ -63,21 +69,17 @@ class StoryAgent(BaseAgent):
                 agent_id=self.agent_id, 
                 agent_type=self.agent_type, 
                 success=False, 
-                error_message=f"Story generation failed: {tool_resp.error_message if tool_resp else 'No response'}"
+                error_message=f"Scene generation failed: {tool_resp.error_message if tool_resp else 'No response'}"
             )
 
         text_output = tool_resp.output_data.get("text", "")
-        # Clean potential markdown markdown blocks
-        if text_output.startswith("```json"):
-            text_output = text_output[7:]
-        if text_output.startswith("```"):
-            text_output = text_output[3:]
-        if text_output.endswith("```"):
-            text_output = text_output[:-3]
+        if text_output.startswith("```json"): text_output = text_output[7:]
+        if text_output.startswith("```"): text_output = text_output[3:]
+        if text_output.endswith("```"): text_output = text_output[:-3]
         text_output = text_output.strip()
 
         try:
-            story_outline = StoryOutline.model_validate_json(text_output)
+            scene_script = SceneScript.model_validate_json(text_output)
         except ValidationError as e:
             return AgentResult(
                 task_id=context.task_id,
@@ -86,13 +88,11 @@ class StoryAgent(BaseAgent):
                 success=False,
                 error_message=f"JSON validation error: {e}"
             )
-            
-        story_outline.project_id = project_id
 
         decision_trace = DecisionTrace(
             agent_id=self.agent_id,
             confidence_score=0.9,
-            reasoning_rationale="Generated StoryOutline using Pydantic JSON schema.",
+            reasoning_rationale="Generated SceneScript using Pydantic JSON schema.",
             context_sources_used=[str(s.section_type) for s in context.sections],
             provenance=ExecutionProvenance(
                 model_name=tool_resp.model_name,
@@ -103,10 +103,11 @@ class StoryAgent(BaseAgent):
 
         artifact = Artifact(
             project_id=project_id,
-            artifact_type=ArtifactType.STORY_OUTLINE,
+            artifact_type=ArtifactType.SCENE_SCRIPT,
             owner_agent=self.agent_id,
             state=ArtifactState.ACTIVE,
-            data=story_outline.model_dump(),
+            data=scene_script.model_dump(),
+            parent_artifact_id=parent_artifact_ids[0] if parent_artifact_ids else None,
             decision_trace=decision_trace,
         )
 
@@ -115,7 +116,7 @@ class StoryAgent(BaseAgent):
             agent_id=self.agent_id,
             agent_type=self.agent_type,
             success=True,
-            state_updates={"latest_story_outline_id": artifact.artifact_id},
+            state_updates={"latest_scene_script_id": artifact.artifact_id},
             produced_artifacts=[artifact],
             decision_trace=decision_trace,
             capability_requests=[str(CapabilityType.GENERATE_TEXT)],

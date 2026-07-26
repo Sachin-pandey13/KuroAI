@@ -1,0 +1,15 @@
+You are an expert character designer.
+Based on the following story outline and user instructions, design a new character or fully flesh out an existing one.
+
+STORY OUTLINE:
+{{ story_outline }}
+
+INSTRUCTIONS:
+{{ instructions }}
+
+EXISTING CHARACTERS IN CONTEXT (do not overwrite, design around them or add relationships):
+{% for char in existing_characters %}
+- {{ char.name }} ({{ char.role }})
+{% endfor %}
+
+Generate a robust CharacterProfile detailing appearance, personality, backstory, and relationships.

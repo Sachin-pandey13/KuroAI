@@ -38,16 +38,55 @@ class MockTextProvider(BaseProvider):
 
     def execute(self, request: ToolRequest) -> ToolResponse:
         """Execute deterministic text generation."""
+        import json, uuid
         start_ms = time.monotonic() * 1000
 
         prompt = request.parameters.get("prompt", "")
         seed = request.parameters.get("seed", 42)
         model = request.parameters.get("model", self.supported_models[0])
 
-        generated_text = (
-            f"[MockTextProvider][model={model}][seed={seed}] "
-            f"Generated response for prompt: '{prompt[:80]}'"
-        )
+        # Detect JSON schema requests (from Phase 2C narrative agents)
+        # and return a minimal valid JSON payload so Pydantic validation passes.
+        if "JSON schema" in prompt or "model_json_schema" in prompt:
+            if "StoryOutline" in prompt or "story_outline" in prompt.lower():
+                generated_text = json.dumps({
+                    "project_id": "mock_project",
+                    "title": "Mock Story Title",
+                    "logline": "A mock story about mocks.",
+                    "beats": [{"beat_id": str(uuid.uuid4()), "title": "Beat 1", "summary": "Something happens.", "emotional_arc": "Neutral", "setting": "A city"}],
+                })
+            elif "CharacterProfile" in prompt or "character_profile" in prompt.lower():
+                generated_text = json.dumps({
+                    "character_id": str(uuid.uuid4()),
+                    "name": "Mock Character",
+                    "age": "25",
+                    "role": "Protagonist",
+                    "personality": "Brave and curious.",
+                    "backstory": "A humble origin.",
+                    "appearance": {"hair": "Black", "eyes": "Brown", "build": "Athletic", "clothing": "Jacket", "distinguishing_features": "None"},
+                    "relationships": [],
+                })
+            elif "SceneScript" in prompt or "scene_script" in prompt.lower():
+                generated_text = json.dumps({
+                    "scene_id": str(uuid.uuid4()),
+                    "beat_id": "b1",
+                    "location": "City rooftop",
+                    "time_of_day": "Night",
+                    "panels": [{"panel_number": 1, "setting_details": "Neon lights below", "action": "Hero stands", "characters_present": [], "camera_angle": "Wide shot"}],
+                })
+            elif "SceneDialogue" in prompt or "dialogue" in prompt.lower():
+                generated_text = json.dumps({
+                    "scene_id": str(uuid.uuid4()),
+                    "bubbles": [{"bubble_id": str(uuid.uuid4()), "panel_number": 1, "character_id": None, "dialogue_type": "NARRATION", "text": "The city never sleeps.", "emotion_tag": "Neutral"}],
+                })
+            else:
+                generated_text = json.dumps({"mock": "response"})
+        else:
+            generated_text = (
+                f"[MockTextProvider][model={model}][seed={seed}] "
+                f"Generated response for prompt: '{prompt[:80]}'"
+            )
+
         prompt_tokens = max(1, len(prompt.split()))
         completion_tokens = max(1, len(generated_text.split()))
 

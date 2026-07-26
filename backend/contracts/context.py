@@ -17,6 +17,8 @@ class ContextSelector(str, Enum):
 class ContextSectionType(str, Enum):
     GOAL = "GOAL"
     UPSTREAM_ARTIFACT = "UPSTREAM_ARTIFACT"
+    ARTIFACT = "ARTIFACT"           # Generic artifact reference
+    DIRECTOR_BRIEF = "DIRECTOR_BRIEF"  # DirectorAgent brief artifact
     CHARACTER_BLUEPRINT = "CHARACTER_BLUEPRINT"
     STYLE_GUIDELINES = "STYLE_GUIDELINES"
     WORLD_LORE = "WORLD_LORE"
