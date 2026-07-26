@@ -3,7 +3,13 @@ from typing import List, Dict, Any, Optional, Set
 from datetime import datetime
 
 from backend.contracts.task import Task, TaskStatus, TaskPriority, ExecutionPlan
-from backend.contracts.artifact import ArtifactState
+from backend.contracts.execution_plan import (
+    ExecutionPlan as ExecutionPlanModel,
+    validate_execution_plan,
+    ExecutionPlanValidationError,
+)
+from backend.contracts.dependency import DependencyNode
+from backend.contracts.artifact import Artifact, ArtifactState
 from backend.contracts.event import Event, EventType
 from backend.engine.task_registry import TaskRegistry
 from backend.engine.dependency_graph import DependencyGraph
@@ -104,6 +110,80 @@ class TaskScheduler:
             self._task_registry.schedule(task.task_id)
 
         return task.task_id
+
+    def load_execution_plan(
+        self,
+        plan_artifact: Artifact,
+        agent_registry: Optional[Any] = None,
+        validate: bool = True,
+    ) -> List[Task]:
+        """
+        Ingest a first-class ExecutionPlan artifact produced by DirectorAgent.
+
+        1. Extract ExecutionPlan data model.
+        2. Validate graph integrity (unique IDs, no cycles, valid dependencies, known agent types).
+        3. Convert planning TaskSpecs into runtime Task instances.
+        4. Register runtime Tasks into TaskRegistry and enqueue into TaskScheduler.
+        5. Build DAG dependency nodes in DependencyGraph.
+
+        Returns:
+            List[Task]: Runtime tasks created and scheduled.
+        """
+        if isinstance(plan_artifact.data, dict):
+            plan = ExecutionPlanModel.model_validate(plan_artifact.data)
+        elif isinstance(plan_artifact.data, ExecutionPlanModel):
+            plan = plan_artifact.data
+        else:
+            raise ValueError("Artifact data is not a valid ExecutionPlan object or dict.")
+
+        known_types = None
+        if agent_registry is not None and hasattr(agent_registry, "list_agents"):
+            known_types = agent_registry.list_agents()
+
+        if validate:
+            validate_execution_plan(plan, known_agent_types=known_types)
+
+        created_tasks: List[Task] = []
+        for spec in plan.task_specs:
+            if spec.priority >= 10:
+                priority_val = TaskPriority.CRITICAL
+            elif spec.priority >= 7:
+                priority_val = TaskPriority.HIGH
+            elif spec.priority >= 4:
+                priority_val = TaskPriority.MEDIUM
+            else:
+                priority_val = TaskPriority.LOW
+
+            task = Task(
+                task_id=spec.spec_id,
+                goal_id=plan.goal_id,
+                target_agent_type=spec.target_agent_type,
+                action_type=spec.payload.get("action", "EXECUTE"),
+                priority=priority_val,
+                status=TaskStatus.QUEUED,
+                payload=spec.payload,
+                required_dependencies=spec.dependencies,
+                execution_timeout=spec.execution_timeout,
+            )
+
+            # Register in TaskRegistry & schedule
+            self.schedule_task(task)
+
+            # Add to DependencyGraph
+            if self._dep_graph is not None:
+                if not self._dep_graph.has_node(task.task_id):
+                    self._dep_graph.create_node(
+                        artifact_id=task.task_id,
+                        artifact_type=task.target_agent_type,
+                        state=ArtifactState.ACTIVE,
+                    )
+                for dep_id in spec.dependencies:
+                    if self._dep_graph.has_node(dep_id):
+                        self._dep_graph.connect(dep_id, task.task_id)
+
+            created_tasks.append(task)
+
+        return created_tasks
 
     def get_ready_tasks(self) -> List[Task]:
         """

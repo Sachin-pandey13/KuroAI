@@ -7,6 +7,8 @@ from backend.contracts.decision_trace import DecisionTrace
 
 
 class ArtifactType(str, Enum):
+    EXECUTION_PLAN = "EXECUTION_PLAN"
+    DIRECTOR_BRIEF = "DIRECTOR_BRIEF"
     STORY_OUTLINE = "STORY_OUTLINE"
     SCENE_SCRIPT = "SCENE_SCRIPT"
     CHARACTER_PROFILE = "CHARACTER_PROFILE"
