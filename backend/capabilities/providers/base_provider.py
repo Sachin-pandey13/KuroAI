@@ -27,6 +27,17 @@ class BaseProvider(ABC):
         ...
 
     @abstractmethod
-    def health_check(self) -> bool:
-        """Verify provider availability."""
+    def health_check(self, live: bool = False) -> bool:
+        """
+        Verify provider availability.
+        If live=False, do a fast static check (API keys, config).
+        If live=True, perform an actual ping/request to the backend.
+        """
         ...
+
+    def cancel(self, request_id: str) -> bool:
+        """
+        Attempt to cancel an ongoing execution request.
+        Returns True if cancellation was successfully dispatched, False otherwise.
+        """
+        return False
