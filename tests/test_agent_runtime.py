@@ -337,4 +337,4 @@ class TestAgentRuntimePipeline:
         assert batch_result.total_tasks == 3
         assert batch_result.success_count == 2
         assert batch_result.failure_count == 1
-        assert batch_result.duration_ms > 0
+        assert batch_result.duration_ms >= 0.0

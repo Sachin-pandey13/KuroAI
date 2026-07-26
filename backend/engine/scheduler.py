@@ -60,6 +60,63 @@ class DAGReadinessEvaluator(BaseReadinessEvaluator):
         return True
 
 
+class HumanApprovalEvaluator(BaseReadinessEvaluator):
+    """
+    Evaluator enforcing Human Review Control Gates.
+    If a task requires human approval (via payload['human_review_gate_id']),
+    execution is paused until an APPROVE action is recorded.
+    
+    Revisions (MINOR_REVISION, MAJOR_REVISION) mark existing artifacts as STALE,
+    allowing new versions to be produced without mutating history.
+    """
+
+    def is_ready(self, task: Task, engines: Dict[str, Any]) -> bool:
+        gate_id = task.payload.get("human_review_gate_id")
+        if not gate_id:
+            # Fall back to standard DAG dependency check
+            return DAGReadinessEvaluator().is_ready(task, engines)
+
+        artifact_registry: Optional[ArtifactRegistry] = engines.get("artifact_registry")
+        dependency_graph: Optional[DependencyGraph] = engines.get("dependency_graph")
+
+        if not artifact_registry or not artifact_registry.exists(gate_id):
+            # Gate artifact not yet created or registered -> pause task
+            task.status = TaskStatus.WAITING_FOR_HUMAN_APPROVAL
+            return False
+
+        gate_art = artifact_registry.get(gate_id)
+        gate_data = gate_art.data
+
+        action = gate_data.get("action")
+        feedback = gate_data.get("feedback_notes", "")
+        target_art_id = gate_data.get("artifact_id")
+
+        if action is None:
+            task.status = TaskStatus.WAITING_FOR_HUMAN_APPROVAL
+            return False
+        elif action == "APPROVE":
+            return DAGReadinessEvaluator().is_ready(task, engines)
+        elif action in ("MINOR_REVISION", "MAJOR_REVISION"):
+            # Mark existing target artifact STALE to preserve audit trail while producing V2
+            if target_art_id and artifact_registry.exists(target_art_id):
+                art = artifact_registry.get(target_art_id)
+                art.state = ArtifactState.STALE
+                if dependency_graph and dependency_graph.has_node(target_art_id):
+                    dependency_graph.get_node(target_art_id).state = ArtifactState.STALE
+
+            # Re-queue task with human feedback attached
+            task.payload["human_feedback"] = feedback
+            task.payload["revision_mode"] = action
+            task.status = TaskStatus.QUEUED
+            return False
+        elif action == "REJECT":
+            task.status = TaskStatus.FAILED
+            task.error_message = f"Human Review Rejected: {feedback}"
+            return False
+
+        return False
+
+
 class TaskScheduler:
     """
     TaskScheduler & Task Orchestration Engine.

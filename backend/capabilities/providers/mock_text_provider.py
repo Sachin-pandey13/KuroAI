@@ -48,14 +48,14 @@ class MockTextProvider(BaseProvider):
         # Detect JSON schema requests (from Phase 2C narrative agents)
         # and return a minimal valid JSON payload so Pydantic validation passes.
         if "JSON schema" in prompt or "model_json_schema" in prompt:
-            if "StoryOutline" in prompt or "story_outline" in prompt.lower():
+            if "StoryOutline" in prompt:
                 generated_text = json.dumps({
                     "project_id": "mock_project",
                     "title": "Mock Story Title",
                     "logline": "A mock story about mocks.",
                     "beats": [{"beat_id": str(uuid.uuid4()), "title": "Beat 1", "summary": "Something happens.", "emotional_arc": "Neutral", "setting": "A city"}],
                 })
-            elif "CharacterProfile" in prompt or "character_profile" in prompt.lower():
+            elif "CharacterProfile" in prompt:
                 generated_text = json.dumps({
                     "character_id": str(uuid.uuid4()),
                     "name": "Mock Character",
@@ -66,7 +66,7 @@ class MockTextProvider(BaseProvider):
                     "appearance": {"hair": "Black", "eyes": "Brown", "build": "Athletic", "clothing": "Jacket", "distinguishing_features": "None"},
                     "relationships": [],
                 })
-            elif "SceneScript" in prompt or "scene_script" in prompt.lower():
+            elif "SceneScript" in prompt:
                 generated_text = json.dumps({
                     "scene_id": str(uuid.uuid4()),
                     "beat_id": "b1",
@@ -74,12 +74,7 @@ class MockTextProvider(BaseProvider):
                     "time_of_day": "Night",
                     "panels": [{"panel_number": 1, "setting_details": "Neon lights below", "action": "Hero stands", "characters_present": [], "camera_angle": "Wide shot"}],
                 })
-            elif "SceneDialogue" in prompt or "dialogue" in prompt.lower():
-                generated_text = json.dumps({
-                    "scene_id": str(uuid.uuid4()),
-                    "bubbles": [{"bubble_id": str(uuid.uuid4()), "panel_number": 1, "character_id": None, "dialogue_type": "NARRATION", "text": "The city never sleeps.", "emotion_tag": "Neutral"}],
-                })
-            elif "MangaPageLayout" in prompt or "page_layout" in prompt.lower():
+            elif "MangaPageLayout" in prompt:
                 generated_text = json.dumps({
                     "page_number": 1,
                     "total_panels": 2,
@@ -89,7 +84,12 @@ class MockTextProvider(BaseProvider):
                         {"slot_id": "slot_2", "panel_number": 2, "importance": "ACTION", "shot_type": "Close-up", "relative_position": "BOTTOM_FULL", "aspect_ratio_suggestion": "4:3", "visual_description": "Close up shot"}
                     ]
                 })
-            elif "ReviewFeedback" in prompt or "image_review" in prompt.lower():
+            elif "SceneDialogue" in prompt:
+                generated_text = json.dumps({
+                    "scene_id": str(uuid.uuid4()),
+                    "bubbles": [{"bubble_id": str(uuid.uuid4()), "panel_number": 1, "character_id": None, "dialogue_type": "NARRATION", "text": "The city never sleeps.", "emotion_tag": "Neutral"}],
+                })
+            elif "ReviewFeedback" in prompt:
                 generated_text = json.dumps({
                     "target_artifact_id": "art_img_1",
                     "reviewer_agent": "image_review_agent",
@@ -98,7 +98,7 @@ class MockTextProvider(BaseProvider):
                     "confidence": 0.95,
                     "issues": []
                 })
-            elif "ContinuityReport" in prompt or "continuity_check" in prompt.lower():
+            elif "ContinuityReport" in prompt:
                 generated_text = json.dumps({
                     "project_id": "proj_mock",
                     "passed": True,
@@ -106,6 +106,21 @@ class MockTextProvider(BaseProvider):
                     "issues": [],
                     "characters_checked": ["c1"],
                     "scenes_checked": 2
+                })
+            elif "ExportManifest" in prompt:
+                generated_text = json.dumps({
+                    "project_id": "proj_export",
+                    "title": "Mock Manga Title",
+                    "total_pages": 1,
+                    "pages": [
+                        {
+                            "page_number": 1,
+                            "grid_style": "DYNAMIC_ACTION",
+                            "panels": [{"panel_number": 1, "image_asset_path": "/assets/panel_1.png", "shot_type": "Wide", "speech_bubbles": []}]
+                        }
+                    ],
+                    "export_format": "PDF_MANIFEST",
+                    "output_pdf_path": "/exports/proj_export_manga.pdf"
                 })
             else:
                 generated_text = json.dumps({"mock": "response"})

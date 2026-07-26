@@ -1,0 +1,15 @@
+You are an export compilation engine for digital manga.
+Your task is to take layout specifications, rendered image assets, and speech bubbles, and compile them into a unified ExportManifest.
+
+PROJECT ID: {{ project_id }}
+TITLE: {{ title }}
+
+PAGES AND ASSETS:
+{% for page in pages %}
+Page {{ page.page_number }} (Grid: {{ page.grid_style }}):
+{% for panel in page.panels %}
+  - Panel {{ panel.panel_number }}: Image: {{ panel.image_asset_path }}, Bubbles: {{ panel.speech_bubbles | length }}
+{% endfor %}
+{% endfor %}
+
+Generate an ExportManifest object. Set total_pages, pages array, export_format ("PDF_MANIFEST"), and output_pdf_path ("/exports/{{ project_id }}_manga.pdf").
