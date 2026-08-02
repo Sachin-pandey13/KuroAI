@@ -1,0 +1,136 @@
+.agents-section {
+  padding: 6rem 2rem;
+  width: 100%;
+}
+
+.agents-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.agent-manga-card {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-left: 3px solid var(--kuro-crimson);
+}
+
+.agent-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.agent-icon {
+  font-size: 2rem;
+}
+
+.agent-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(192, 57, 43, 0.15);
+  color: var(--kuro-crimson-glow);
+  border: 1px solid rgba(192, 57, 43, 0.3);
+}
+
+.agent-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--kuro-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.agent-role {
+  font-size: 0.88rem;
+  color: var(--kuro-crimson-glow);
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.agent-desc {
+  font-size: 0.9rem;
+  color: var(--kuro-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.contract-btn {
+  background: none;
+  border: none;
+  color: var(--kuro-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--dur-fast) ease;
+}
+
+.contract-btn:hover {
+  color: var(--kuro-crimson-glow);
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: var(--blur-md);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.modal-content {
+  max-width: 540px;
+  width: 100%;
+  padding: 2rem;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--kuro-text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.modal-code {
+  background: #080808;
+  padding: 1.2rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--kuro-crimson-glow);
+  overflow-x: auto;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .agents-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

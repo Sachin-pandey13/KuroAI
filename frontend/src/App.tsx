@@ -65,6 +65,11 @@ function App() {
 
   return (
     <>
+      {/* Skip to Content for Keyboard Accessibility */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       {/* Aurora WebGL shader background */}
       <AuroraCanvas />
 

@@ -67,27 +67,27 @@ const fragmentShader = /* glsl */`
     shimmer *= sin(uv.x * 13.0 - t * 1.5) * 0.3 + 0.7;
     shimmer = pow(shimmer, 1.5);
 
-    // Color palette: deep purple → pink → magenta
-    vec3 col1 = vec3(0.24, 0.04, 0.55); // deep purple
-    vec3 col2 = vec3(0.55, 0.08, 0.60); // violet-magenta
-    vec3 col3 = vec3(0.90, 0.05, 0.50); // pink-magenta
-    vec3 col4 = vec3(1.00, 0.35, 0.80); // bright pink
+    // Color palette: deep red → crimson → amber glow
+    vec3 col1 = vec3(0.18, 0.02, 0.02); // dark blood red base
+    vec3 col2 = vec3(0.45, 0.05, 0.05); // deep crimson
+    vec3 col3 = vec3(0.75, 0.15, 0.08); // bright crimson
+    vec3 col4 = vec3(0.95, 0.35, 0.12); // amber flame accent
 
     vec3 aurora = mix(col1, col2, clamp(f * 2.0, 0.0, 1.0));
     aurora = mix(aurora, col3, clamp(f * f * 4.0, 0.0, 1.0));
     aurora = mix(aurora, col4, clamp(pow(f, 5.0) * 6.0, 0.0, 1.0));
     aurora *= shimmer;
 
-    // Subtle second aurora layer (teal-ish violet for depth)
+    // Subtle second aurora layer (deep charcoal-crimson for depth)
     vec2 q2 = vec2(fbm(uv * 1.5 + t * 0.2 + 3.0), fbm(uv * 1.5 + vec2(5.2, 1.3)));
     float f2 = fbm(uv * 1.2 + q2 * 0.8);
     float band2 = smoothstep(0.40, 0.70, bandY) * smoothstep(0.85, 0.50, bandY) * 0.5;
-    vec3 layer2 = vec3(0.18, 0.05, 0.65) * f2 * band2;
+    vec3 layer2 = vec3(0.35, 0.03, 0.03) * f2 * band2;
 
     // Combine on pure black
     vec3 finalColor = vec3(0.0);
-    finalColor += aurora * auroraMask * 0.55;
-    finalColor += layer2 * 0.35;
+    finalColor += aurora * auroraMask * 0.45;
+    finalColor += layer2 * 0.30;
 
     // Very subtle base glow (keeps it from being totally flat at bottom)
     float baseGlow = smoothstep(1.0, 0.0, bandY) * 0.04;

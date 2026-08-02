@@ -1,178 +1,214 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
+import { getLoaderMode } from '../utils/loaderStrategy';
 import './CinematicLoader.css';
 
-const CinematicLoader = ({ onComplete }: { onComplete: () => void }) => {
-  const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState<'loading' | 'reveal'>('loading');
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const loaderRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
+interface CinematicLoaderProps {
+  onComplete: () => void;
+}
 
-  // WebGL ripple canvas
+export default function CinematicLoader({ onComplete }: CinematicLoaderProps) {
+  const [skipVisible, setSkipVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const eyeSvgRef = useRef<SVGSVGElement>(null);
+  const arcsGroupRef = useRef<SVGGroupElement>(null);
+  const irisRef = useRef<SVGCircleElement>(null);
+  const pupilRef = useRef<SVGCircleElement>(null);
+  const textContainerRef = useRef<HTMLDivElement>(null);
+  const glowRingRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const mode = getLoaderMode();
 
-    let animId: number;
-    let t = 0;
+    if (mode === 'skip') {
+      onComplete();
+      return;
+    }
 
-    const draw = () => {
-      animId = requestAnimationFrame(draw);
-      t += 0.015;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Show skip button after 1s
+    const timer = setTimeout(() => setSkipVisible(true), 1000);
 
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
+    const timelineDuration = mode === 'short' ? 1.0 : 3.6;
 
-      for (let r = 0; r < 8; r++) {
-        const radius = (r * 120 + (t * 60) % 960);
-        const alpha = Math.max(0, 1 - radius / 960) * 0.25;
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255, 0, 255, ${alpha})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Exit curtain animation
+          gsap.to(containerRef.current, {
+            scaleY: 0,
+            transformOrigin: 'top center',
+            duration: 0.7,
+            ease: 'power4.inOut',
+            onComplete: () => {
+              onComplete();
+            },
+          });
+        },
+      });
+
+      if (mode === 'short') {
+        // Quick 1s loader for returning visitors
+        tl.fromTo(
+          glowRingRef.current,
+          { opacity: 0, scale: 0.5 },
+          { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)' }
+        )
+        .fromTo(
+          textContainerRef.current,
+          { opacity: 0, y: 15 },
+          { opacity: 1, y: 0, duration: 0.4 },
+          '-=0.2'
+        )
+        .to({}, { duration: 0.3 }); // pause
+      } else {
+        // Full cinematic 3.6s eye opening intro
+        // t=0: Glow blooms
+        tl.fromTo(
+          glowRingRef.current,
+          { opacity: 0, scale: 0.2 },
+          { opacity: 0.8, scale: 1.5, duration: 0.8, ease: 'power2.out' }
+        )
+        // t=0.8: SVG Eye iris fades in & eyelid opens
+        .fromTo(
+          eyeSvgRef.current,
+          { opacity: 0, scale: 0.6 },
+          { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' },
+          '-=0.4'
+        )
+        // t=1.2: Tomoe-inspired 3 AI arcs rotate
+        .fromTo(
+          arcsGroupRef.current,
+          { rotation: 0, transformOrigin: '50% 50%' },
+          { rotation: 360, duration: 1.4, ease: 'power2.inOut' },
+          '-=0.4'
+        )
+        // Pupil expands slightly
+        .fromTo(
+          pupilRef.current,
+          { r: 8 },
+          { r: 16, duration: 0.6, ease: 'back.out(2)' },
+          '-=1.0'
+        )
+        // t=2.4: Eye scales up into camera (zoom impact)
+        .to(eyeSvgRef.current, {
+          scale: 6,
+          opacity: 0,
+          duration: 0.6,
+          ease: 'power4.in',
+        })
+        // Ring collapses & KuroAI logo text reveals
+        .fromTo(
+          textContainerRef.current,
+          { opacity: 0, scale: 0.85, y: 20 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'power3.out' },
+          '-=0.2'
+        )
+        .to({}, { duration: 0.4 }); // slight pause at end
       }
+    }, containerRef);
 
-      // Scanning line
-      const scanY = ((Math.sin(t * 0.7) + 1) / 2) * canvas.height;
-      const gradient = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
-      gradient.addColorStop(0, 'transparent');
-      gradient.addColorStop(0.5, 'rgba(255, 0, 255, 0.12)');
-      gradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, scanY - 30, canvas.width, 60);
+    return () => {
+      clearTimeout(timer);
+      ctx.revert();
     };
-    draw();
-
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
-  // GSAP progress timeline
-  useEffect(() => {
-    const tl = gsap.timeline();
-
-    tl.to({ val: 0 }, {
-      val: 100,
-      duration: 2.8,
-      ease: 'power2.inOut',
-      onUpdate: function () {
-        setProgress(Math.round(this.targets()[0].val));
-      },
-      onComplete: () => {
-        setPhase('reveal');
-
-        // Cinematic curtain reveal
-        gsap.to(loaderRef.current, {
-          scaleY: 0,
-          transformOrigin: 'top center',
-          duration: 0.8,
-          ease: 'power4.inOut',
-          delay: 0.4,
-          onComplete: onComplete,
-        });
-      },
-    });
-
-    // Text flicker
-    gsap.fromTo(textRef.current,
-      { opacity: 0.3 },
-      { opacity: 1, duration: 0.3, repeat: 3, yoyo: true, delay: 0.2 }
-    );
-
-    return () => { tl.kill(); };
   }, [onComplete]);
 
+  const handleSkip = () => {
+    gsap.to(containerRef.current, {
+      opacity: 0,
+      duration: 0.3,
+      onComplete,
+    });
+  };
+
   return (
-    <motion.div
-      ref={loaderRef}
-      className="cinematic-loader"
-      initial={{ opacity: 1 }}
-    >
-      <canvas ref={canvasRef} className="loader-canvas" />
-
-      <div className="loader-content">
-        {/* Logo */}
-        <motion.div
-          className="loader-logo"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 1, type: 'spring', stiffness: 80 }}
+    <div ref={containerRef} className="cinematic-loader" aria-label="Loading KuroAI">
+      {/* Skip button for Accessibility */}
+      {skipVisible && (
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="loader-skip-btn"
+          aria-label="Skip introduction"
         >
-          <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff00ff" />
-                <stop offset="100%" stopColor="#7b2ff7" />
-              </linearGradient>
-            </defs>
-            <polygon points="30,3 57,18 57,42 30,57 3,42 3,18" stroke="url(#logoGrad)" strokeWidth="2" fill="none" />
-            <polygon points="30,12 48,22 48,38 30,48 12,38 12,22" stroke="url(#logoGrad)" strokeWidth="1.5" fill="rgba(255,0,255,0.05)" />
-            <circle cx="30" cy="30" r="8" fill="url(#logoGrad)" opacity="0.8" />
-          </svg>
-        </motion.div>
+          Skip Intro ➔
+        </button>
+      )}
 
-        {/* Brand name */}
-        <div ref={textRef} className="loader-brand">
-          {'KuroAi'.split('').map((char, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + i * 0.07, type: 'spring', stiffness: 200 }}
-              className="loader-char"
-            >
-              {char}
-            </motion.span>
-          ))}
-        </div>
+      {/* Red Radial Background Glow */}
+      <div ref={glowRingRef} className="loader-glow-ring" aria-hidden="true" />
 
-        <motion.p
-          className="loader-tagline"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+      <div className="loader-center-content">
+        {/* Custom AI Vision Eye SVG Symbol */}
+        <svg
+          ref={eyeSvgRef}
+          className="loader-eye-svg"
+          viewBox="0 0 200 200"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
         >
-          Generative Manga Intelligence
-        </motion.p>
+          {/* Eyelid / Outer Frame */}
+          <path
+            d="M 20,100 C 60,40 140,40 180,100 C 140,160 60,160 20,100 Z"
+            stroke="rgba(192, 57, 43, 0.6)"
+            strokeWidth="2.5"
+            fill="rgba(10, 10, 10, 0.85)"
+          />
 
-        {/* Progress bar */}
-        <div className="loader-progress-container">
-          <div className="loader-progress-track">
-            <motion.div
-              className="loader-progress-fill"
-              style={{ width: `${progress}%` }}
+          {/* Concentric Glowing Outer Ring */}
+          <circle cx="100" cy="100" r="50" stroke="rgba(231, 76, 60, 0.4)" strokeWidth="1.5" strokeDasharray="4 4" />
+          
+          {/* Iris Base */}
+          <circle ref={irisRef} cx="100" cy="100" r="38" fill="url(#irisGradient)" stroke="#c0392b" strokeWidth="2" />
+
+          {/* 3 Abstract Rotating Arc Segments (Original AI-Eye Geometry) */}
+          <g ref={arcsGroupRef}>
+            <path
+              d="M 100,68 A 32 32 0 0 1 128,84"
+              stroke="#fff"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              opacity="0.9"
             />
-            <div className="loader-progress-glow" style={{ left: `${progress}%` }} />
-          </div>
-          <div className="loader-progress-label">
-            <span>{progress}%</span>
-            <span className="loader-status">
-              {progress < 30 ? 'Initializing AI Core...' :
-               progress < 60 ? 'Loading Diffusion Models...' :
-               progress < 90 ? 'Calibrating Pipelines...' :
-               'Ready'}
-            </span>
-          </div>
+            <path
+              d="M 128,116 A 32 32 0 0 1 90,131"
+              stroke="#fff"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              opacity="0.9"
+            />
+            <path
+              d="M 72,116 A 32 32 0 0 1 72,84"
+              stroke="#fff"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              opacity="0.9"
+            />
+          </g>
+
+          {/* Central AI Pupil */}
+          <circle ref={pupilRef} cx="100" cy="100" r="10" fill="#050505" stroke="#e74c3c" strokeWidth="2" />
+          <circle cx="96" cy="96" r="3" fill="#ffffff" opacity="0.8" />
+
+          {/* Gradients */}
+          <defs>
+            <radialGradient id="irisGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#e74c3c" />
+              <stop offset="70%" stopColor="#c0392b" />
+              <stop offset="100%" stopColor="#5c0000" />
+            </radialGradient>
+          </defs>
+        </svg>
+
+        {/* KuroAI Wordmark & Subtitle */}
+        <div ref={textContainerRef} className="loader-text-wrap">
+          <h1 className="loader-brand-title">
+            KURO<span className="accent-red">AI</span>
+          </h1>
+          <p className="loader-tagline">Generative Manga AI Engine</p>
         </div>
       </div>
-
-      {/* Corner decorations */}
-      {['tl', 'tr', 'bl', 'br'].map((corner) => (
-        <div key={corner} className={`loader-corner loader-corner--${corner}`}>
-          <svg viewBox="0 0 20 20" fill="none">
-            <path d="M0 10 L0 0 L10 0" stroke="#ff00ff" strokeWidth="2" opacity="0.6" />
-          </svg>
-        </div>
-      ))}
-    </motion.div>
+    </div>
   );
-};
-
-export default CinematicLoader;
+}

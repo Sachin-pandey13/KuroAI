@@ -1,0 +1,23 @@
+.cursor-ink-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9990;
+}
+
+.cursor-glow-ring {
+  position: fixed;
+  top: -12px;
+  left: -12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--kuro-crimson-glow);
+  box-shadow: 0 0 16px rgba(192, 57, 43, 0.6);
+  pointer-events: none;
+  z-index: 9991;
+  will-change: transform;
+  transform: translate3d(-100px, -100px, 0);
+}

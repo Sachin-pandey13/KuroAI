@@ -5,15 +5,21 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    include: ['three', 'gsap', 'gsap/ScrollTrigger', 'framer-motion'],
+    include: ['three', 'gsap', 'gsap/ScrollTrigger', 'framer-motion', 'lenis'],
   },
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          three: ['three'],
-          gsap: ['gsap'],
-          'framer-motion': ['framer-motion'],
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) {
+            return 'three';
+          }
+          if (id.includes('node_modules/gsap')) {
+            return 'gsap';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'framer-motion';
+          }
         },
       },
     },
