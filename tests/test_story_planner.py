@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("jsonschema")
+
 from inference.story_planner import StoryPlanner
 
 

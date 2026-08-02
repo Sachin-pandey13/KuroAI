@@ -2,6 +2,9 @@ import os
 
 import pytest
 
+pytest.importorskip("anthropic")
+pytest.importorskip("openai")
+
 from backend.capabilities.providers.anthropic_provider import AnthropicProvider
 from backend.capabilities.providers.gemini_provider import GeminiProvider
 from backend.capabilities.providers.httpx_providers import (

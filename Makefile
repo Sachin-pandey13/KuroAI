@@ -1,4 +1,4 @@
-.PHONY: help setup lock test stress api-test benchmark coverage validate lint format typecheck ci audit docker-dev docker-prod docker-gpu clean
+.PHONY: help setup lock test collect stress api-test benchmark coverage validate lint format typecheck docs ci audit docker-dev docker-prod docker-gpu clean
 
 # ────────────────────────────────────────────────────────────────────────────────
 # KuroAI Makefile — Developer Commands & Automation
@@ -19,6 +19,9 @@ lock:  ## Regenerate requirements/runtime.lock file
 
 test:  ## Run full unit test suite
 	$(PYTEST) tests/ -q --ignore=tests/stress
+
+collect:  ## Run test collection gate
+	$(PYTEST) --collect-only -q
 
 stress:  ## Run stress and concurrency test suite
 	$(PYTEST) tests/stress/ -v
@@ -46,9 +49,12 @@ format:  ## Auto-format code with black & isort
 typecheck:  ## Run mypy type checker
 	$(PYTHON) -m mypy backend/ config/ --ignore-missing-imports
 
-ci: validate format lint typecheck test coverage  ## Run full CI verification suite locally
+docs:  ## Build MkDocs documentation site
+	$(PYTHON) -m mkdocs build
 
-audit:  ## Run 16-point repository quality audit
+ci: validate format lint typecheck collect test coverage  ## Run full CI verification suite locally
+
+audit:  ## Run repository health gate audit
 	$(PYTHON) scripts/repo_audit.py
 
 docker-dev:  ## Start development docker-compose stack

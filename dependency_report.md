@@ -1,6 +1,6 @@
 # KuroAI Dependency Audit Report
 
-**Generated at**: 2026-08-02 18:28:19 UTC
+**Generated at**: 2026-08-02 19:14:10 UTC
 
 **Python Runtime**: 3.11.9 on win32
 

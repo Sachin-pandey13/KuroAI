@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements/dev.txt
+          pip install -r requirements/ci.txt
 
       - name: Run Architecture Validator
         run: python scripts/architecture_validator.py
