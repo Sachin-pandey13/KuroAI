@@ -3,9 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from backend.contracts.artifact import Artifact, ArtifactState
 from backend.contracts.event import Event, EventType
-from backend.contracts.execution_plan import (
-    ExecutionPlan as ExecutionPlanModel,
-)
+from backend.contracts.execution_plan import ExecutionPlan as ExecutionPlanModel
 from backend.contracts.execution_plan import (
     validate_execution_plan,
 )

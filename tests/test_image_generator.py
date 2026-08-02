@@ -1,10 +1,16 @@
 import os
 
-from inference.image_generator import ImageGenerator
+import pytest
+
+image_generator = pytest.importorskip("inference.image_generator")
 
 
+@pytest.mark.skipif(
+    not os.getenv("ENABLE_LEGACY_PIPELINE_TESTS"),
+    reason="Legacy pipeline test requires live AI weights/API keys",
+)
 def test_image_generation_pipeline():
-    gen = ImageGenerator()
+    gen = image_generator.ImageGenerator()
 
     panel = {
         "page": 1,

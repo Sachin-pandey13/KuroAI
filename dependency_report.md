@@ -1,6 +1,6 @@
 # KuroAI Dependency Audit Report
 
-**Generated at**: 2026-08-02 17:26:51 UTC
+**Generated at**: 2026-08-02 18:28:19 UTC
 
 **Python Runtime**: 3.11.9 on win32
 
@@ -8,32 +8,32 @@
 
 ## Executive Summary
 
-- **Total Packages Installed**: `96`
-- **Root `requirements.txt` Count**: `9`
+- **Total Packages Installed**: `154`
+- **Root `requirements.txt` Count**: `0`
 - **Lockfile `requirements-lock.txt` Count**: `85`
 - **Detected ML Packages**: `7`
-- **Detected Dev/Tooling Packages**: `2`
+- **Detected Dev/Tooling Packages**: `11`
 
 ## Proposed Categorization for `requirements/` Directory
 
 ### 1. `requirements/runtime.txt` (Core Server)
 ```text
-fastapi>=0.135.1
-fpdf2>=2.8.7
-jsonschema>=4.26.0
-openai>=2.28.0
-pillow>=12.0.0
-pydantic>=2.12.5
-pyyaml>=6.0.3
-requests>=2.32.5
-uvicorn>=0.41.0
 ```
 
 ### 2. `requirements/dev.txt` (Developer Tooling)
 ```text
 -r runtime.txt
+black
+coverage
+isort
+mypy
+pip-audit
+pip-tools
+pre-commit
 pytest
 pytest-asyncio
+pytest-cov
+ruff
 ```
 
 ### 3. `requirements/ml.txt` (Heavy AI Models)

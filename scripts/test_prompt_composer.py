@@ -1,4 +1,13 @@
-from pipeline.prompt_composer import PromptComposer
+import sys
+
+try:
+    from pipeline.prompt_composer import PromptComposer
+except ImportError:
+    PromptComposer = None  # type: ignore[assignment, misc]
+
+if PromptComposer is None:
+    print("Error: Legacy pipeline.prompt_composer module is unavailable in this environment.")
+    sys.exit(1)
 
 scene = {
     "emotion": "loneliness",

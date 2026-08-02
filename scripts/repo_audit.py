@@ -1,6 +1,6 @@
 """
-KuroAI 16-Point Repository Audit Script.
-Executes automated ship/no-ship quality verification across all 16 engineering dimensions.
+KuroAI 20-Point Categorized Repository Audit Script.
+Executes automated ship/no-ship quality verification across all 20 engineering dimensions.
 
 Usage:
     python scripts/repo_audit.py
@@ -33,17 +33,44 @@ def run_cmd(cmd: List[str]) -> Tuple[int, str]:
         return 1, str(e)
 
 
-def check_1_architecture():
-    code, out = run_cmd([sys.executable, "scripts/architecture_validator.py"])
-    record_result("1. Architecture Laws (0 violations)", code == 0, out)
+# ----------------------------------------------------------------------
+# Section 1: Dependency Checks
+# ----------------------------------------------------------------------
+def check_1_import_graph():
+    code, out = run_cmd(
+        [
+            sys.executable,
+            "-c",
+            "import backend; import backend.agents; import backend.capabilities; import backend.engine",
+        ]
+    )
+    record_result("1. Import Graph Validation", code == 0, out)
 
 
-def check_2_public_api():
-    code, out = run_cmd([sys.executable, "-m", "pytest", "tests/test_public_api.py", "-q"])
-    record_result("2. Public API Stability", code == 0, out)
+def check_2_dual_env_dependencies():
+    runtime_ok = os.path.exists("requirements/runtime.txt")
+    ci_ok = os.path.exists("requirements/ci.txt")
+    if ci_ok:
+        with open("requirements/ci.txt", "r", encoding="utf-8") as f:
+            ci_content = f.read()
+        inherits_runtime = "-r runtime.txt" in ci_content
+    else:
+        inherits_runtime = False
+
+    success = runtime_ok and ci_ok and inherits_runtime
+    msg = "requirements/{runtime,ci}.txt missing or ci.txt does not inherit runtime.txt"
+    record_result("2. Dual-Environment Dependency Layering", success, msg)
 
 
-def check_3_formatting():
+def check_3_dependency_audit():
+    code, out = run_cmd([sys.executable, "scripts/dependency_audit.py"])
+    record_result("3. Dependency Audit & Package Inventory", code == 0, out)
+
+
+# ----------------------------------------------------------------------
+# Section 2: Quality Checks
+# ----------------------------------------------------------------------
+def check_4_formatting_black():
     code, out = run_cmd(
         [
             sys.executable,
@@ -57,10 +84,27 @@ def check_3_formatting():
             "benchmarks",
         ]
     )
-    record_result("3. Code Formatting (Black)", code == 0, out)
+    record_result("4. Code Formatting (Black)", code == 0, out)
 
 
-def check_4_linting():
+def check_5_import_sorting_isort():
+    code, out = run_cmd(
+        [
+            sys.executable,
+            "-m",
+            "isort",
+            "--check-only",
+            "backend",
+            "config",
+            "scripts",
+            "tests",
+            "benchmarks",
+        ]
+    )
+    record_result("5. Import Sorting (isort)", code == 0, out)
+
+
+def check_6_linting_ruff():
     code, out = run_cmd(
         [
             sys.executable,
@@ -74,24 +118,32 @@ def check_4_linting():
             "benchmarks",
         ]
     )
-    record_result("4. Code Linting (Ruff)", code == 0, out)
+    record_result("6. Code Linting (Ruff)", code == 0, out)
 
 
-def check_5_typechecking():
+def check_7_typechecking_mypy():
     code, out = run_cmd(
-        [sys.executable, "-m", "mypy", "backend", "config", "--ignore-missing-imports"]
+        [
+            sys.executable,
+            "-m",
+            "mypy",
+            "backend",
+            "config",
+            "--ignore-missing-imports",
+        ]
     )
-    record_result("5. Type Check (MyPy)", code == 0, out)
+    record_result("7. Type Check (MyPy)", code == 0, out)
 
 
-def check_6_dependencies():
-    exists = os.path.exists("requirements/runtime.txt") and os.path.exists("requirements/dev.txt")
-    record_result(
-        "6. Dependency Audit & Layering", exists, "requirements/ directory structure missing"
-    )
+# ----------------------------------------------------------------------
+# Section 3: Testing
+# ----------------------------------------------------------------------
+def check_8_test_collection():
+    code, out = run_cmd([sys.executable, "-m", "pytest", "--collect-only", "-q"])
+    record_result("8. Test Collection Gate (pytest --collect-only -q)", code == 0, out)
 
 
-def check_7_unit_tests():
+def check_9_unit_test_suite():
     code, out = run_cmd(
         [
             sys.executable,
@@ -100,14 +152,12 @@ def check_7_unit_tests():
             "tests/",
             "-q",
             "--ignore=tests/stress",
-            "--ignore=tests/test_image_generator.py",
-            "--ignore=tests/test_orchestrator.py",
         ]
     )
-    record_result("7. Unit Test Suite Pass", code == 0, out)
+    record_result("9. Unit Test Suite Pass", code == 0, out)
 
 
-def check_8_coverage():
+def check_10_coverage():
     code, out = run_cmd(
         [
             sys.executable,
@@ -118,41 +168,61 @@ def check_8_coverage():
             "pytest",
             "tests/",
             "--ignore=tests/stress",
-            "--ignore=tests/test_image_generator.py",
-            "--ignore=tests/test_orchestrator.py",
             "-q",
         ]
     )
     if code == 0:
-        code_rep, out_rep = run_cmd([sys.executable, "-m", "coverage", "report", "--fail-under=80"])
-        record_result("8. Coverage Threshold (>=80%)", code_rep == 0, out_rep)
+        code_rep, out_rep = run_cmd(
+            [
+                sys.executable,
+                "-m",
+                "coverage",
+                "report",
+                "--fail-under=80",
+            ]
+        )
+        record_result("10. Coverage Threshold (>=80%)", code_rep == 0, out_rep)
     else:
-        record_result("8. Coverage Threshold (>=80%)", False, "Coverage run failed")
+        record_result("10. Coverage Threshold (>=80%)", False, "Coverage run failed")
 
 
-def check_9_security():
-    code, out = run_cmd([sys.executable, "-m", "pytest", "tests/test_security.py", "-q"])
-    record_result("9. Security Suite Pass", code == 0, out)
-
-
-def check_10_benchmarks():
-    code, out = run_cmd([sys.executable, "-m", "benchmarks.runner"])
-    files_ok = (
-        os.path.exists("performance_report.md")
-        and os.path.exists("benchmarks/performance.json")
-        and os.path.exists("benchmarks/performance.csv")
-    )
+# ----------------------------------------------------------------------
+# Section 4: Infrastructure
+# ----------------------------------------------------------------------
+def check_11_docker():
+    files = [
+        "Dockerfile",
+        "docker-compose.dev.yml",
+        "docker-compose.prod.yml",
+        "docker-compose.gpu.yml",
+    ]
+    missing = [f for f in files if not os.path.exists(f)]
     record_result(
-        "10. Multi-Format Benchmarks", code == 0 and files_ok, "Benchmark outputs missing"
+        "11. Docker Stacks (dev/prod/gpu)", len(missing) == 0, f"Missing files: {missing}"
     )
 
 
-def check_11_mkdocs():
+def check_12_workflows():
+    files = [
+        ".github/workflows/ci.yml",
+        ".github/workflows/docs.yml",
+        ".github/workflows/release.yml",
+        ".github/workflows/codeql.yml",
+    ]
+    missing = [f for f in files if not os.path.exists(f)]
+    record_result(
+        "12. GitHub Actions Workflows Validation",
+        len(missing) == 0,
+        f"Missing files: {missing}",
+    )
+
+
+def check_13_mkdocs():
     code, out = run_cmd([sys.executable, "-m", "mkdocs", "build"])
-    record_result("11. MkDocs Site Compilation", code == 0, out)
+    record_result("13. MkDocs Site Compilation", code == 0, out)
 
 
-def check_12_doc_links():
+def check_14_doc_links():
     docs = [
         "README.md",
         "ARCHITECTURE_v1.md",
@@ -163,83 +233,113 @@ def check_12_doc_links():
     ]
     missing = [d for d in docs if not os.path.exists(d)]
     record_result(
-        "12. Documentation Links & Files Resolution", len(missing) == 0, f"Missing files: {missing}"
+        "14. Documentation Links & Files Resolution",
+        len(missing) == 0,
+        f"Missing files: {missing}",
     )
 
 
-def check_13_docker():
-    files = [
-        "Dockerfile",
-        "docker-compose.dev.yml",
-        "docker-compose.prod.yml",
-        "docker-compose.gpu.yml",
-    ]
-    missing = [f for f in files if not os.path.exists(f)]
+def check_15_release_config():
+    ok = (
+        os.path.exists("RELEASE_NOTES.md")
+        and os.path.exists("CHANGELOG.md")
+        and os.path.exists("pyproject.toml")
+    )
+    record_result("15. Release Configuration & Packaging Specs", ok, "Release specs missing")
+
+
+# ----------------------------------------------------------------------
+# Section 5: Architecture
+# ----------------------------------------------------------------------
+def check_16_architecture():
+    code, out = run_cmd([sys.executable, "scripts/architecture_validator.py"])
+    record_result("16. Architecture Laws (0 violations)", code == 0, out)
+
+
+def check_17_public_api():
+    code, out = run_cmd([sys.executable, "-m", "pytest", "tests/test_public_api.py", "-q"])
+    record_result("17. Public API Stability", code == 0, out)
+
+
+# ----------------------------------------------------------------------
+# Section 6: Repository
+# ----------------------------------------------------------------------
+def check_18_benchmarks():
+    code, out = run_cmd([sys.executable, "-m", "benchmarks.runner"])
+    files_ok = (
+        os.path.exists("performance_report.md")
+        and os.path.exists("benchmarks/performance.json")
+        and os.path.exists("benchmarks/performance.csv")
+    )
     record_result(
-        "13. Docker Stacks (dev/prod/gpu)", len(missing) == 0, f"Missing docker files: {missing}"
+        "18. Multi-Format Benchmarks", code == 0 and files_ok, "Benchmark outputs missing"
     )
 
 
-def check_14_workflows():
-    files = [
-        ".github/workflows/ci.yml",
-        ".github/workflows/docs.yml",
-        ".github/workflows/release.yml",
-        ".github/workflows/benchmarks.yml",
-    ]
-    missing = [f for f in files if not os.path.exists(f)]
-    record_result(
-        "14. GitHub Actions Workflows", len(missing) == 0, f"Missing workflow files: {missing}"
-    )
-
-
-def check_15_readme():
+def check_19_readme():
     if not os.path.exists("README.md"):
-        record_result("15. README Completeness & Badges", False, "README.md missing")
+        record_result("19. README Completeness & Badges", False, "README.md missing")
         return
     with open("README.md", "r", encoding="utf-8") as f:
         content = f.read()
     has_status = "Project Status" in content or "Status" in content
     has_platforms = "Supported Platforms" in content or "Platforms" in content
     record_result(
-        "15. README Completeness, Status & Badges",
+        "19. README Completeness, Status & Badges",
         has_status and has_platforms,
         "README missing status/platforms section",
     )
 
 
-def check_16_metadata():
+def check_20_metadata():
     files = ["LICENSE", "CODEOWNERS", ".editorconfig", ".gitattributes", "CITATION.cff"]
     missing = [f for f in files if not os.path.exists(f)]
     record_result(
-        "16. License & Repository Metadata", len(missing) == 0, f"Missing metadata files: {missing}"
+        "20. License, Metadata & Cross-Platform Paths",
+        len(missing) == 0,
+        f"Missing metadata files: {missing}",
     )
 
 
 def main():
     print("=" * 70)
-    print("      KuroAI 16-Point Repository Quality Audit Gate")
+    print("      KuroAI 20-Point Categorized Repository Quality Audit Gate")
     print("=" * 70)
 
-    check_1_architecture()
-    check_2_public_api()
-    check_3_formatting()
-    check_4_linting()
-    check_5_typechecking()
-    check_6_dependencies()
-    check_7_unit_tests()
-    check_8_coverage()
-    check_9_security()
-    check_10_benchmarks()
-    check_11_mkdocs()
-    check_12_doc_links()
-    check_13_docker()
-    check_14_workflows()
-    check_15_readme()
-    check_16_metadata()
+    print("\n--- Section 1: Dependency Checks ---")
+    check_1_import_graph()
+    check_2_dual_env_dependencies()
+    check_3_dependency_audit()
 
-    print("=" * 70)
-    print(f"Summary: {CHECKS_PASSED}/16 checks PASSED ({CHECKS_FAILED} failed)")
+    print("\n--- Section 2: Quality Checks ---")
+    check_4_formatting_black()
+    check_5_import_sorting_isort()
+    check_6_linting_ruff()
+    check_7_typechecking_mypy()
+
+    print("\n--- Section 3: Testing ---")
+    check_8_test_collection()
+    check_9_unit_test_suite()
+    check_10_coverage()
+
+    print("\n--- Section 4: Infrastructure ---")
+    check_11_docker()
+    check_12_workflows()
+    check_13_mkdocs()
+    check_14_doc_links()
+    check_15_release_config()
+
+    print("\n--- Section 5: Architecture ---")
+    check_16_architecture()
+    check_17_public_api()
+
+    print("\n--- Section 6: Repository ---")
+    check_18_benchmarks()
+    check_19_readme()
+    check_20_metadata()
+
+    print("\n" + "=" * 70)
+    print(f"Summary: {CHECKS_PASSED}/20 checks PASSED ({CHECKS_FAILED} failed)")
     print("=" * 70)
 
     if CHECKS_FAILED > 0:

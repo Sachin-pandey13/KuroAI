@@ -45,8 +45,6 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: |
             performance_report.md
-            benchmarks/performance.json
-            benchmarks/performance.csv
             ARCHITECTURE_v1.md
             PUBLIC_API.md
             CHANGELOG.md

@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  OPENAI_API_KEY: "test-mock-key-for-ci"
+  ANTHROPIC_API_KEY: "test-mock-key-for-ci"
+  GEMINI_API_KEY: "test-mock-key-for-ci"
+
 jobs:
   architecture:
-    name: Architecture Validator
+    name: Architecture & Import Graph Validator
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +22,7 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements/ci.txt
+      - run: python -c "import backend; import backend.agents; import backend.capabilities; import backend.engine"
       - run: python scripts/architecture_validator.py
 
   formatting:
@@ -28,7 +34,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install black isort
+      - run: pip install -r requirements/ci.txt
       - run: black --check backend config scripts tests benchmarks
       - run: isort --check-only backend config scripts tests benchmarks
 
@@ -41,7 +47,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install ruff
+      - run: pip install -r requirements/ci.txt
       - run: ruff check backend config scripts tests benchmarks
 
   type-checking:
@@ -53,12 +59,25 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install mypy pydantic types-requests types-PyYAML
+      - run: pip install -r requirements/ci.txt
       - run: mypy backend config --ignore-missing-imports
+
+  test-collection:
+    name: Test Collection Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements/ci.txt
+      - run: python -m pytest --collect-only -q
 
   unit-tests:
     name: Unit Tests (${{ matrix.os }} / Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
+    needs: [architecture, formatting, linting, type-checking, test-collection]
     strategy:
       fail-fast: false
       matrix:
@@ -93,20 +112,21 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements/ci.txt detect-secrets
+      - run: pip install -r requirements/ci.txt
       - run: python -m pytest tests/test_security.py -v
       - run: pip-audit || echo "Security audit finished with non-zero status"
 
   coverage:
     name: Layer Coverage Enforcement
     runs-on: ubuntu-latest
+    needs: [unit-tests]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements/ci.txt coverage
+      - run: pip install -r requirements/ci.txt
       - run: coverage run -m pytest tests/ --ignore=tests/stress -q
       - run: coverage report --fail-under=80
       - run: coverage html -d coverage_html
