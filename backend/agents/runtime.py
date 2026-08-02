@@ -82,6 +82,22 @@ class AgentRuntime:
         self._state_engine = state_engine
 
     # ------------------------------------------------------------------
+    # Public API — Agent Registration & Retrieval
+    # ------------------------------------------------------------------
+
+    def register_agent(self, agent) -> None:
+        """Register an agent instance into the AgentRegistry."""
+        self._agent_registry.register_agent(agent)
+
+    def get_agent(self, agent_type: str):
+        """Retrieve a registered agent by type."""
+        return self._agent_registry.get_agent(agent_type)
+
+    async def execute_task(self, task: Task) -> AgentResult:
+        """Public API Alias for run_task()."""
+        return await self.run_task(task)
+
+    # ------------------------------------------------------------------
     # Core execution pipeline
     # ------------------------------------------------------------------
 

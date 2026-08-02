@@ -252,3 +252,7 @@ class CapabilityRegistry:
                 execution_time_ms=round(time.monotonic() * 1000 - start_ms, 3),
             )
 
+    def execute_tool(self, request: ToolRequest) -> ToolResponse:
+        """Public API Alias for execute()."""
+        return self.execute(request)
+

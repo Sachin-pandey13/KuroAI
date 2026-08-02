@@ -268,6 +268,10 @@ class DependencyGraph:
         """Return True if the graph contains a cycle."""
         return DAGAlgorithms.detect_cycle(self._nodes, self._edges)
 
+    def detect_cycles(self) -> bool:
+        """Public API Alias for detect_cycle."""
+        return self.detect_cycle()
+
     def validate(self) -> bool:
         """Validate graph integrity. Raises CycleDetectedError if invalid."""
         if self.detect_cycle():
@@ -292,9 +296,18 @@ class DependencyGraph:
         """Return immediate parent artifact IDs."""
         return list(self.get_node(artifact_id).upstream_ids)
 
+    def get_dependencies(self, artifact_id: str) -> List[str]:
+        """Public API Alias for get_upstream."""
+        return self.get_upstream(artifact_id)
+
     def get_downstream(self, artifact_id: str) -> List[str]:
         """Return immediate child artifact IDs."""
         return list(self.get_node(artifact_id).downstream_ids)
+
+    def get_dependents(self, artifact_id: str) -> List[str]:
+        """Public API Alias for get_downstream."""
+        return self.get_downstream(artifact_id)
+
 
     def ancestors(self, artifact_id: str) -> Set[str]:
         """Return all transitive upstream ancestor node IDs."""

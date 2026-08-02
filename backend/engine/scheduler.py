@@ -168,6 +168,20 @@ class TaskScheduler:
 
         return task.task_id
 
+    def schedule(self, task: Task) -> str:
+        """Public API Alias for schedule_task."""
+        return self.schedule_task(task)
+
+    def get_plan(self) -> ExecutionPlan:
+        """Public API Alias for build_execution_plan."""
+        return self.build_execution_plan()
+
+    def cancel_task(self, task_id: str, reason: str = "Cancelled by user") -> None:
+        """Cancel a pending task."""
+        if self._task_registry.exists(task_id):
+            self._task_registry.block(task_id, reason=reason)
+
+
     def load_execution_plan(
         self,
         plan_artifact: Artifact,

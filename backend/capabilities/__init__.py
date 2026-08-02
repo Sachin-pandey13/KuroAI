@@ -1,3 +1,9 @@
 """
-KuroAI 2.0 Capabilities Package (Capability Registry & Providers)
+KuroAI Capabilities Package (Capability Registry & Providers).
 """
+
+from backend.capabilities.registry import CapabilityRegistry
+
+__all__ = [
+    "CapabilityRegistry",
+]

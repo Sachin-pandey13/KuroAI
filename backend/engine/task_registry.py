@@ -71,10 +71,17 @@ class TaskRegistry:
         """Check whether a task ID exists in the registry."""
         return task_id in self._store
 
+    def update_status(
+        self, task_id: str, new_status: TaskStatus, error_message: Optional[str] = None
+    ) -> Task:
+        """Public API method for transitioning task status."""
+        return self._transition_status(task_id, new_status, error_message=error_message)
+
     def _transition_status(
         self, task_id: str, new_status: TaskStatus, error_message: Optional[str] = None
     ) -> Task:
         """Internal helper enforcing state machine transition rules."""
+
         task = self.get_task(task_id)
         current_status = task.status
 

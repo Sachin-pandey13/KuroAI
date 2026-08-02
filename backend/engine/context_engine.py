@@ -359,6 +359,11 @@ class ContextEngine:
         if retriever not in self._retrievers[selector]:
             self._retrievers[selector].append(retriever)
 
+    def register_section_provider(self, selector: ContextSelector, retriever: BaseRetriever) -> None:
+        """Public API Alias for register_retriever."""
+        self.register_retriever(selector, retriever)
+
+
     def estimate_token_cost(self, data: Any) -> int:
         """Expose token cost estimation API."""
         return self._estimator.estimate_token_cost(data)
@@ -415,6 +420,11 @@ class ContextEngine:
             total_token_cost=total_cost,
             is_truncated=is_truncated,
         )
+
+    def assemble_context(self, task: Task, cache: Optional[ContextCache] = None) -> AgentContext:
+        """Public API Alias for build_context."""
+        return self.build_context(task, cache=cache)
+
 
     def _apply_budget(
         self,

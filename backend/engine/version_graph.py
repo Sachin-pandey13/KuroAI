@@ -89,6 +89,11 @@ class VersionGraph:
             raise ArtifactHistoryNotFoundError(f"No version history found for artifact '{artifact_id}'.")
         return self._timelines[artifact_id][-1]
 
+    def get_latest_version(self, artifact_id: str) -> VersionEntry:
+        """Public API Alias for get_latest."""
+        return self.get_latest(artifact_id)
+
+
     def get_version(self, artifact_id: str, version_number: int) -> VersionEntry:
         """Fetch a specific historical version snapshot by version number."""
         if not self.has_history(artifact_id):
