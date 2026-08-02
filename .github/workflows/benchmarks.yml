@@ -1,0 +1,39 @@
+name: KuroAI Benchmarks & Stress Tests
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * 1"  # Weekly on Mondays at 2am UTC
+
+jobs:
+  stress-and-benchmarks:
+    name: Stress Tests & Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Stress & Concurrency Tests
+        run: python -m pytest tests/stress/ -v
+
+      - name: Run Benchmark Suite
+        run: python -m benchmarks.runner
+
+      - name: Upload Benchmark Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: performance_report.md

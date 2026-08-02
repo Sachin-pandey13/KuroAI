@@ -1,0 +1,47 @@
+name: KuroAI Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Architecture Validator
+        run: python scripts/architecture_validator.py
+
+      - name: Run Full Test Suite
+        run: python -m pytest tests/ -q
+
+      - name: Run Benchmark Suite
+        run: python -m benchmarks.runner
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          files: |
+            performance_report.md
+            ARCHITECTURE_v1.md
+            PUBLIC_API.md
+            CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
