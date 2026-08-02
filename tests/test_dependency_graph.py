@@ -3,19 +3,20 @@ Test: Dependency Graph & Selective Invalidation Engine (Milestone 3)
 Verifies Stages 1-5: Node/Edge Integrity, Cycle Detection, Topological Sort,
 Traversal, Selective Invalidation (First Law), Dirty Queries, and The Golden Test of KuroAI.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+
+from backend.contracts.artifact import ArtifactState
 from backend.engine.dependency_graph import (
-    DependencyGraph,
     CycleDetectedError,
+    DependencyGraph,
     NodeNotFoundError,
-    EdgeNotFoundError,
 )
-from backend.contracts.dependency import DependencyNode, DependencyEdge, EdgeType
-from backend.contracts.artifact import ArtifactState, ArtifactType
 
 
 @pytest.fixture
@@ -27,9 +28,10 @@ def graph() -> DependencyGraph:
 # Stage 1 — Graph Structure & Integrity Tests
 # =====================================================================
 
+
 class TestGraphStructure:
     def test_add_node(self, graph):
-        node = graph.create_node("art-001", "STORY_OUTLINE")
+        graph.create_node("art-001", "STORY_OUTLINE")
         assert graph.has_node("art-001")
         assert graph.node_count == 1
 
@@ -72,6 +74,7 @@ class TestGraphStructure:
 # =====================================================================
 # Stage 2 — Validation & Topological Sort Tests
 # =====================================================================
+
 
 class TestValidationAndTopoSort:
     def test_simple_cycle_detection_raises(self, graph):
@@ -136,6 +139,7 @@ class TestValidationAndTopoSort:
 # Stage 3 — Traversal & Ancestry Tests
 # =====================================================================
 
+
 class TestTraversalAndAncestry:
     @pytest.fixture
     def linear_chain(self, graph):
@@ -164,6 +168,7 @@ class TestTraversalAndAncestry:
 # =====================================================================
 # Stage 4 & 5 — Selective Invalidation & Dirty Queries Tests
 # =====================================================================
+
 
 class TestSelectiveInvalidationAndDirtyQueries:
     def test_selective_invalidation(self, graph):
@@ -229,6 +234,7 @@ class TestSelectiveInvalidationAndDirtyQueries:
 # =====================================================================
 # Behavioral Scenarios & The Golden Test of KuroAI
 # =====================================================================
+
 
 class TestBehavioralScenarios:
 

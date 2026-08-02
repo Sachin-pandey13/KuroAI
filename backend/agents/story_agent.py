@@ -1,17 +1,18 @@
 import os
 from typing import Optional
+
 from jinja2 import Environment, FileSystemLoader
-from pydantic import ValidationError
 
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext, ContextSectionType
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-from backend.agents.tool_executor import BaseToolExecutor
 from backend.agents.output_parser import OutputParser
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
+from backend.contracts.context import AgentContext, ContextSectionType
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.contracts.story import StoryOutline
+
 
 class StoryAgent(BaseAgent):
     """
@@ -32,12 +33,18 @@ class StoryAgent(BaseAgent):
         tool_executor: Optional[BaseToolExecutor] = None,
     ) -> AgentResult:
         if tool_executor is None:
-            return AgentResult(task_id=context.task_id, agent_id=self.agent_id, agent_type=self.agent_type, success=False, error_message="No tool executor provided")
+            return AgentResult(
+                task_id=context.task_id,
+                agent_id=self.agent_id,
+                agent_type=self.agent_type,
+                success=False,
+                error_message="No tool executor provided",
+            )
 
         project_id = "default_project"
         user_prompt = ""
         director_brief = ""
-        
+
         for sec in context.sections:
             if sec.section_type == ContextSectionType.GOAL and isinstance(sec.content, dict):
                 user_prompt = sec.content.get("prompt", str(sec.content))
@@ -48,7 +55,7 @@ class StoryAgent(BaseAgent):
         env = Environment(loader=FileSystemLoader(os.path.join("backend", "prompts")))
         template = env.get_template("story_outline.jinja")
         prompt = template.render(user_prompt=user_prompt, director_brief=director_brief)
-        
+
         # We append JSON instructions since we don't have native response_format integrated in providers yet
         prompt += f"\n\nYou MUST return a valid JSON object adhering to this JSON schema:\n{StoryOutline.model_json_schema()}"
 
@@ -57,28 +64,28 @@ class StoryAgent(BaseAgent):
             parameters={"prompt": prompt, "temperature": 0.7, "max_tokens": 4096},
         )
         tool_resp = await tool_executor.execute(tool_req)
-        
+
         if not tool_resp or not tool_resp.success:
             return AgentResult(
-                task_id=context.task_id, 
-                agent_id=self.agent_id, 
-                agent_type=self.agent_type, 
-                success=False, 
-                error_message=f"Story generation failed: {tool_resp.error_message if tool_resp else 'No response'}"
+                task_id=context.task_id,
+                agent_id=self.agent_id,
+                agent_type=self.agent_type,
+                success=False,
+                error_message=f"Story generation failed: {tool_resp.error_message if tool_resp else 'No response'}",
             )
 
         text_output = tool_resp.output_data.get("text", "")
         story_outline = OutputParser.parse_json(text_output, StoryOutline)
-        
+
         if story_outline is None:
             return AgentResult(
                 task_id=context.task_id,
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 success=False,
-                error_message=f"JSON validation error: failed to parse StoryOutline from model output."
+                error_message="JSON validation error: failed to parse StoryOutline from model output.",
             )
-            
+
         story_outline.project_id = project_id
 
         decision_trace = DecisionTrace(

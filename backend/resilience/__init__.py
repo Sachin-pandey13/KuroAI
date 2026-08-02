@@ -4,16 +4,16 @@ Resilience package public API.
 
 from backend.resilience.circuit_breaker import (
     CircuitBreaker,
-    CircuitState,
     CircuitOpenError,
-)
-from backend.resilience.retry_policy import (
-    RetryPolicy,
-    MaxRetriesExceededError,
+    CircuitState,
 )
 from backend.resilience.recovery_manager import (
-    RecoveryManager,
     PoisonTaskError,
+    RecoveryManager,
+)
+from backend.resilience.retry_policy import (
+    MaxRetriesExceededError,
+    RetryPolicy,
 )
 
 __all__ = [

@@ -1,7 +1,7 @@
-from typing import Callable, Dict, List, Any, Optional
 from datetime import datetime
-from backend.contracts.event import Event, EventType, EventLog
+from typing import Any, Callable, Dict, List, Optional
 
+from backend.contracts.event import Event, EventLog, EventType
 
 EventListener = Callable[[Event], None]
 
@@ -14,7 +14,9 @@ class EventDeliveryError(Exception):
 
     def __init__(self, errors: List[str]):
         self.errors = errors
-        super().__init__(f"{len(errors)} listener(s) failed during event delivery: {'; '.join(errors)}")
+        super().__init__(
+            f"{len(errors)} listener(s) failed during event delivery: {'; '.join(errors)}"
+        )
 
 
 class EventBus:
@@ -42,7 +44,11 @@ class EventBus:
     def unsubscribe(self, event_type: EventType, listener: EventListener) -> None:
         """Remove a previously registered listener."""
         if event_type in self._listeners:
-            self._listeners[event_type] = [l for l in self._listeners[event_type] if l != listener]
+            self._listeners[event_type] = [
+                listener_func
+                for listener_func in self._listeners[event_type]
+                if listener_func != listener
+            ]
 
     def publish(self, event: Any, payload: Optional[Any] = None) -> None:
         """
@@ -94,4 +100,3 @@ class EventBus:
     def clear_history(self) -> None:
         """Clear event delivery history."""
         self._history.clear()
-

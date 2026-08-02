@@ -3,11 +3,14 @@ Context-propagating tracer for KuroAI using Python contextvars.
 """
 
 import contextvars
-from typing import Optional, List, Callable
+from typing import Any, Callable, List, Optional
+
 from backend.telemetry.span import Span
 
 # Context variable storing the current active span
-_CURRENT_SPAN: contextvars.ContextVar[Optional[Span]] = contextvars.ContextVar("_CURRENT_SPAN", default=None)
+_CURRENT_SPAN: contextvars.ContextVar[Optional[Span]] = contextvars.ContextVar(
+    "_CURRENT_SPAN", default=None
+)
 
 
 class Tracer:
@@ -54,13 +57,14 @@ class Tracer:
         """
         Context manager to automatically set and restore current active span.
         """
+
         class _SpanContextManager:
             def __init__(self, tracer: Tracer, span_name: str, attrs: Optional[dict]):
                 self.tracer = tracer
                 self.span_name = span_name
                 self.attrs = attrs
                 self.span: Optional[Span] = None
-                self.token = None
+                self.token: Any = None
 
             def __enter__(self) -> Span:
                 self.span = self.tracer.start_span(self.span_name, self.attrs)

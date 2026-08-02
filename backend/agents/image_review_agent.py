@@ -1,16 +1,18 @@
 import os
 from typing import Optional
+
 from jinja2 import Environment, FileSystemLoader
 
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext, ContextSectionType
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-from backend.agents.tool_executor import BaseToolExecutor
 from backend.agents.output_parser import OutputParser
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
+from backend.contracts.context import AgentContext, ContextSectionType
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.contracts.review import ReviewFeedback
+
 
 class ImageReviewAgent(BaseAgent):
     """
@@ -48,7 +50,10 @@ class ImageReviewAgent(BaseAgent):
         expected_details = "Manga style line art"
 
         for sec in context.sections:
-            if sec.section_type in (ContextSectionType.ARTIFACT, ContextSectionType.UPSTREAM_ARTIFACT) and isinstance(sec.content, dict):
+            if sec.section_type in (
+                ContextSectionType.ARTIFACT,
+                ContextSectionType.UPSTREAM_ARTIFACT,
+            ) and isinstance(sec.content, dict):
                 if sec.content.get("artifact_type") == ArtifactType.GENERATED_IMAGE.value:
                     target_artifact_id = sec.content.get("artifact_id", target_artifact_id)
                     project_id = sec.content.get("project_id", project_id)

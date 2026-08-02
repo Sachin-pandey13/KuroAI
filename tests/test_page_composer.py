@@ -8,7 +8,7 @@ def test_page_composition():
         {"positive_prompt": "scene 1", "style_anchor": "kuroai_manga_v1"},
         {"positive_prompt": "scene 2", "style_anchor": "kuroai_manga_v1"},
         {"positive_prompt": "scene 3", "style_anchor": "kuroai_manga_v1"},
-        {"positive_prompt": "scene 4", "style_anchor": "kuroai_manga_v1"}
+        {"positive_prompt": "scene 4", "style_anchor": "kuroai_manga_v1"},
     ]
 
     pages = composer.compose(scenes)

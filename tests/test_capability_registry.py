@@ -4,29 +4,31 @@ Verifies Stages 1-4: Contracts, CapabilityDescriptor, ResolvedProvider, MockProv
 ProviderHealthMonitor, PriorityRoutingStrategy, resolution vs execution separation,
 fallback failover, error isolation, and provider lifecycle (enable/disable).
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
-from backend.contracts.capability import (
-    CapabilityType,
-    CapabilityDescriptor,
-    ToolRequest,
-    ToolResponse,
-    ResolvedProvider,
-)
+
+from backend.capabilities.providers.base_provider import BaseProvider
+from backend.capabilities.providers.mock_image_provider import MockImageProvider
+from backend.capabilities.providers.mock_text_provider import MockTextProvider
 from backend.capabilities.registry import (
+    BaseRoutingStrategy,
+    CapabilityNotRegisteredError,
     CapabilityRegistry,
     ProviderHealthMonitor,
-    BaseRoutingStrategy,
-    PriorityRoutingStrategy,
     ProviderNotFoundError,
-    CapabilityNotRegisteredError,
 )
-from backend.capabilities.providers.mock_text_provider import MockTextProvider
-from backend.capabilities.providers.mock_image_provider import MockImageProvider
-from backend.capabilities.providers.base_provider import BaseProvider
+from backend.contracts.capability import (
+    CapabilityDescriptor,
+    CapabilityType,
+    ResolvedProvider,
+    ToolRequest,
+    ToolResponse,
+)
 
 
 @pytest.fixture
@@ -50,6 +52,7 @@ def registry(text_provider, image_provider) -> CapabilityRegistry:
 # =====================================================================
 # Unit Tests — CapabilityDescriptor & Contract Enhancements
 # =====================================================================
+
 
 class TestCapabilityContracts:
     def test_capability_descriptor_defaults(self, text_provider):
@@ -81,6 +84,7 @@ class TestCapabilityContracts:
 # Unit Tests — ProviderHealthMonitor
 # =====================================================================
 
+
 class TestProviderHealthMonitor:
     def test_provider_healthy_by_default(self):
         monitor = ProviderHealthMonitor()
@@ -107,6 +111,7 @@ class TestProviderHealthMonitor:
 # =====================================================================
 # Unit Tests — Provider Registration & Queries
 # =====================================================================
+
 
 class TestCapabilityRegistryRegistration:
     def test_register_and_list_capabilities(self, registry):
@@ -147,6 +152,7 @@ class TestCapabilityRegistryRegistration:
 # =====================================================================
 # Unit Tests — Resolution API (resolve vs execute separation)
 # =====================================================================
+
 
 class TestCapabilityRegistryResolution:
     def test_resolve_returns_resolved_provider(self, registry):
@@ -189,6 +195,7 @@ class TestCapabilityRegistryResolution:
 # =====================================================================
 # Unit Tests — Routing Strategy & Fallback
 # =====================================================================
+
 
 class TestRoutingStrategy:
     def test_preferred_provider_selected(self):
@@ -258,6 +265,7 @@ class TestRoutingStrategy:
 # =====================================================================
 # Integration Tests — Mock Provider Execution & Telemetry
 # =====================================================================
+
 
 class TestMockProviderExecution:
     def test_mock_text_execution(self, registry):

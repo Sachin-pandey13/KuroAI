@@ -2,24 +2,23 @@
 Central Telemetry Manager for KuroAI.
 """
 
-from typing import List, Dict, Any
-from backend.telemetry.span import Span
-from backend.telemetry.tracing import Tracer
-from backend.telemetry.metrics import (
-    MetricExporter,
-    ConsoleExporter,
-    JSONExporter,
-    PrometheusExporter,
-    OpenTelemetryExporter,
-    EventAuditRegistry,
-)
+from typing import Any, Dict, List
+
 from backend.telemetry.instrumentation import (
+    EVENT_AUDIT,
+    LLM_COST_COUNTER,
+    LLM_TOKEN_COUNTER,
     TASK_EXECUTION_COUNTER,
     TASK_LATENCY_HISTOGRAM,
-    LLM_TOKEN_COUNTER,
-    LLM_COST_COUNTER,
-    EVENT_AUDIT,
 )
+from backend.telemetry.metrics import (
+    EventAuditRegistry,
+    JSONExporter,
+    MetricExporter,
+    PrometheusExporter,
+)
+from backend.telemetry.span import Span
+from backend.telemetry.tracing import Tracer
 
 
 class TelemetryManager:
@@ -28,6 +27,7 @@ class TelemetryManager:
     """
 
     _instance = None
+    _initialized: bool = False
 
     def __new__(cls):
         if cls._instance is None:
@@ -86,11 +86,13 @@ class TelemetryManager:
         ]
         # Append event audit metrics
         for event_name, count in self.event_audit.get_all_counts().items():
-            snapshot.append({
-                "name": f"kuroai.event.{event_name.lower()}",
-                "type": "counter",
-                "value": float(count),
-            })
+            snapshot.append(
+                {
+                    "name": f"kuroai.event.{event_name.lower()}",
+                    "type": "counter",
+                    "value": float(count),
+                }
+            )
         return snapshot
 
     def export_all(self) -> None:

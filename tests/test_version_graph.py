@@ -3,19 +3,21 @@ Test: Version Graph & Editability Engine (Milestone 4)
 Verifies Stages 1-6: Version Contracts, Timeline Management, Non-Destructive Rollback,
 Structural Diff Engine, and Integration Scenarios 1-6.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.engine.artifact_registry import ArtifactRegistry
+from backend.engine.dependency_graph import DependencyGraph
 from backend.engine.version_graph import (
     VersionGraph,
     VersionNotFoundError,
-    ArtifactHistoryNotFoundError,
 )
-from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.dependency_graph import DependencyGraph
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 
 
 @pytest.fixture
@@ -37,6 +39,7 @@ def graph() -> DependencyGraph:
 # Unit Tests — Version Recording & Retrieval
 # =====================================================================
 
+
 class TestVersionRecordingAndRetrieval:
     def test_record_first_version(self, vg):
         v1 = vg.record_version("art-001", {"hair": "black"}, {"style": "manga"})
@@ -56,7 +59,7 @@ class TestVersionRecordingAndRetrieval:
 
     def test_snapshot_immutability(self, vg):
         data = {"hair": "black", "nested": {"key": "value"}}
-        v1 = vg.record_version("art-001", data, {})
+        vg.record_version("art-001", data, {})
 
         # Mutate local data dictionary
         data["hair"] = "red"
@@ -104,6 +107,7 @@ class TestVersionRecordingAndRetrieval:
 # Unit Tests — Structural Version Diff Engine
 # =====================================================================
 
+
 class TestVersionDiffEngine:
     def test_diff_structural_changes(self, vg):
         vg.record_version("art-001", {"hair": "black", "hat": "cap", "eyes": "red"}, {})
@@ -121,6 +125,7 @@ class TestVersionDiffEngine:
 # Integration Scenarios 1 to 6
 # =====================================================================
 
+
 class TestIntegrationScenarios:
 
     def test_scenario_1_character_hair_progression(self, vg):
@@ -128,9 +133,13 @@ class TestIntegrationScenarios:
         Scenario 1: Character Hair color progression (Black -> Brown -> Red).
         Verify three version snapshots exist.
         """
-        v1 = vg.record_version("char-01", {"name": "Kuro", "hair": "Black"}, {}, change_summary="Initial draft")
-        v2 = vg.record_version("char-01", {"name": "Kuro", "hair": "Brown"}, {}, change_summary="Lightened hair")
-        v3 = vg.record_version("char-01", {"name": "Kuro", "hair": "Red"}, {}, change_summary="Dyed red")
+        vg.record_version(
+            "char-01", {"name": "Kuro", "hair": "Black"}, {}, change_summary="Initial draft"
+        )
+        vg.record_version(
+            "char-01", {"name": "Kuro", "hair": "Brown"}, {}, change_summary="Lightened hair"
+        )
+        vg.record_version("char-01", {"name": "Kuro", "hair": "Red"}, {}, change_summary="Dyed red")
 
         history = vg.get_history("char-01")
         assert len(history) == 3
@@ -251,7 +260,7 @@ class TestIntegrationScenarios:
         """
         vg.record_version("node-01", {"v": 1}, {})
         vg.record_version("node-01", {"v": 2}, {})
-        v3 = vg.record_version("node-01", {"v": 3}, {})
+        vg.record_version("node-01", {"v": 3}, {})
 
         res = vg.rollback("node-01", 3)
 

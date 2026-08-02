@@ -1,16 +1,18 @@
 import os
 from typing import Optional
+
 from jinja2 import Environment, FileSystemLoader
 
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext, ContextSectionType
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-from backend.agents.tool_executor import BaseToolExecutor
 from backend.agents.output_parser import OutputParser
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
+from backend.contracts.context import AgentContext, ContextSectionType
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.contracts.export import ExportManifest
+
 
 class ExportAgent(BaseAgent):
     """
@@ -45,7 +47,10 @@ class ExportAgent(BaseAgent):
         parent_artifact_ids = []
 
         for sec in context.sections:
-            if sec.section_type in (ContextSectionType.ARTIFACT, ContextSectionType.UPSTREAM_ARTIFACT) and isinstance(sec.content, dict):
+            if sec.section_type in (
+                ContextSectionType.ARTIFACT,
+                ContextSectionType.UPSTREAM_ARTIFACT,
+            ) and isinstance(sec.content, dict):
                 art_type = sec.content.get("artifact_type")
                 art_id = sec.content.get("artifact_id")
                 if art_id:
@@ -55,26 +60,37 @@ class ExportAgent(BaseAgent):
 
                 if art_type == ArtifactType.MANGA_PAGE_LAYOUT.value:
                     layout_data = sec.content.get("data", {})
-                    pages_data.append({
-                        "page_number": layout_data.get("page_number", 1),
-                        "grid_style": layout_data.get("grid_style", "DYNAMIC"),
-                        "panels": [
-                            {
-                                "panel_number": s.get("panel_number", 1),
-                                "image_asset_path": f"/assets/panel_{s.get('panel_number', 1)}.png",
-                                "shot_type": s.get("shot_type", "Standard"),
-                                "speech_bubbles": [],
-                            }
-                            for s in layout_data.get("slots", [])
-                        ]
-                    })
+                    pages_data.append(
+                        {
+                            "page_number": layout_data.get("page_number", 1),
+                            "grid_style": layout_data.get("grid_style", "DYNAMIC"),
+                            "panels": [
+                                {
+                                    "panel_number": s.get("panel_number", 1),
+                                    "image_asset_path": f"/assets/panel_{s.get('panel_number', 1)}.png",
+                                    "shot_type": s.get("shot_type", "Standard"),
+                                    "speech_bubbles": [],
+                                }
+                                for s in layout_data.get("slots", [])
+                            ],
+                        }
+                    )
 
         if not pages_data:
-            pages_data = [{
-                "page_number": 1,
-                "grid_style": "DEFAULT_GRID",
-                "panels": [{"panel_number": 1, "image_asset_path": "/assets/panel_1.png", "shot_type": "Wide", "speech_bubbles": []}]
-            }]
+            pages_data = [
+                {
+                    "page_number": 1,
+                    "grid_style": "DEFAULT_GRID",
+                    "panels": [
+                        {
+                            "panel_number": 1,
+                            "image_asset_path": "/assets/panel_1.png",
+                            "shot_type": "Wide",
+                            "speech_bubbles": [],
+                        }
+                    ],
+                }
+            ]
 
         env = Environment(loader=FileSystemLoader(os.path.join("backend", "prompts")))
         template = env.get_template("export_manifest.jinja")

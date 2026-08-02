@@ -1,22 +1,21 @@
-import pytest
 import json
-from pydantic import BaseModel, Field
 
-from backend.agents.output_parser import OutputParser
-from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
-from backend.contracts.capability import ToolRequest, ToolResponse, CapabilityType
-from backend.contracts.artifact import ArtifactType
-from backend.agents.tool_executor import BaseToolExecutor
+import pytest
+from pydantic import BaseModel
 
-from backend.agents.layout_agent import LayoutAgent
 from backend.agents.continuity_agent import (
-    ContinuityAgent,
     CharacterAppearanceRule,
+    ContinuityAgent,
     RelationshipRule,
 )
 from backend.agents.image_review_agent import ImageReviewAgent
-from backend.contracts.layout import MangaPageLayout
-from backend.contracts.review import ReviewFeedback, ContinuityReport, ReviewSeverity
+from backend.agents.layout_agent import LayoutAgent
+from backend.agents.output_parser import OutputParser
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.artifact import ArtifactType
+from backend.contracts.capability import ToolRequest, ToolResponse
+from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
+from backend.contracts.review import ReviewSeverity
 
 
 class MockJSONProvider(BaseToolExecutor):
@@ -45,6 +44,7 @@ class DummyModel(BaseModel):
 # OutputParser Tests
 # =====================================================================
 
+
 def test_output_parser_strips_markdown_and_parses():
     raw_markdown = """```json
     {
@@ -68,27 +68,32 @@ def test_output_parser_returns_none_on_invalid_json():
 # LayoutAgent Tests
 # =====================================================================
 
+
 @pytest.mark.asyncio
 async def test_layout_agent_valid_json():
     agent = LayoutAgent()
-    valid_json = json.dumps({
-        "page_number": 1,
-        "total_panels": 2,
-        "grid_style": "DYNAMIC_ACTION",
-        "slots": [
-            {
-                "slot_id": "s1",
-                "panel_number": 1,
-                "importance": "ESTABLISHING",
-                "shot_type": "Wide shot",
-                "relative_position": "TOP_FULL",
-                "aspect_ratio_suggestion": "16:9",
-                "visual_description": "Establishing shot of city"
-            }
-        ]
-    })
+    valid_json = json.dumps(
+        {
+            "page_number": 1,
+            "total_panels": 2,
+            "grid_style": "DYNAMIC_ACTION",
+            "slots": [
+                {
+                    "slot_id": "s1",
+                    "panel_number": 1,
+                    "importance": "ESTABLISHING",
+                    "shot_type": "Wide shot",
+                    "relative_position": "TOP_FULL",
+                    "aspect_ratio_suggestion": "16:9",
+                    "visual_description": "Establishing shot of city",
+                }
+            ],
+        }
+    )
     executor = MockJSONProvider(valid_json)
-    ctx = AgentContext(task_id="t1", goal_id="g1", project_id="p1", target_agent_type="LAYOUT", sections=[])
+    ctx = AgentContext(
+        task_id="t1", goal_id="g1", project_id="p1", target_agent_type="LAYOUT", sections=[]
+    )
 
     result = await agent.execute(ctx, executor)
     assert result.success is True
@@ -100,7 +105,9 @@ async def test_layout_agent_valid_json():
 async def test_layout_agent_malformed_json():
     agent = LayoutAgent()
     executor = MockJSONProvider("```json\n{ malformed: \n```")
-    ctx = AgentContext(task_id="t1", goal_id="g1", project_id="p1", target_agent_type="LAYOUT", sections=[])
+    ctx = AgentContext(
+        task_id="t1", goal_id="g1", project_id="p1", target_agent_type="LAYOUT", sections=[]
+    )
 
     result = await agent.execute(ctx, executor)
     assert result.success is False
@@ -111,6 +118,7 @@ async def test_layout_agent_malformed_json():
 # ContinuityAgent Tests & Multiple Rules Aggregation
 # =====================================================================
 
+
 def test_continuity_multiple_rules_aggregation():
     """Verify that ContinuityAgent correctly aggregates multiple rule hits."""
     chars = [
@@ -118,14 +126,14 @@ def test_continuity_multiple_rules_aggregation():
             "character_id": "c1",
             "name": "Ren",
             "appearance": {"hair": "blonde", "eyes": "blue"},
-            "relationships": [{"target_character_id": "c2", "relationship_type": "enemy"}]
+            "relationships": [{"target_character_id": "c2", "relationship_type": "enemy"}],
         },
         {
             "character_id": "c2",
             "name": "Kaito",
             "appearance": {"hair": "black", "eyes": "brown"},
-            "relationships": []
-        }
+            "relationships": [],
+        },
     ]
     scenes = [
         {
@@ -134,8 +142,8 @@ def test_continuity_multiple_rules_aggregation():
                 # Trigger appearance rule: Ren has dark hair in action
                 {"panel_number": 1, "action": "Ren stands with dark hair looking around"},
                 # Trigger relationship rule: enemies hugging warmly
-                {"panel_number": 2, "action": "Ren and Kaito hugs warmly as best friends"}
-            ]
+                {"panel_number": 2, "action": "Ren and Kaito hugs warmly as best friends"},
+            ],
         }
     ]
 
@@ -158,14 +166,27 @@ def test_continuity_multiple_rules_aggregation():
         project_id="p1",
         target_agent_type="CONTINUITY",
         sections=[
-            ContextSection(section_type=ContextSectionType.ARTIFACT, title="Char", content={"artifact_type": "CHARACTER_PROFILE", "data": chars[0]}),
-            ContextSection(section_type=ContextSectionType.ARTIFACT, title="Char2", content={"artifact_type": "CHARACTER_PROFILE", "data": chars[1]}),
-            ContextSection(section_type=ContextSectionType.ARTIFACT, title="Scene", content={"artifact_type": "SCENE_SCRIPT", "data": scenes[0]}),
-        ]
+            ContextSection(
+                section_type=ContextSectionType.ARTIFACT,
+                title="Char",
+                content={"artifact_type": "CHARACTER_PROFILE", "data": chars[0]},
+            ),
+            ContextSection(
+                section_type=ContextSectionType.ARTIFACT,
+                title="Char2",
+                content={"artifact_type": "CHARACTER_PROFILE", "data": chars[1]},
+            ),
+            ContextSection(
+                section_type=ContextSectionType.ARTIFACT,
+                title="Scene",
+                content={"artifact_type": "SCENE_SCRIPT", "data": scenes[0]},
+            ),
+        ],
     )
 
     # Execute without executor to rely strictly on rule engine pipeline
     import asyncio
+
     result = asyncio.run(agent.execute(ctx, tool_executor=None))
     assert result.success is True
     report_data = result.produced_artifacts[0].data
@@ -177,19 +198,24 @@ def test_continuity_multiple_rules_aggregation():
 # ImageReviewAgent Tests
 # =====================================================================
 
+
 @pytest.mark.asyncio
 async def test_image_review_agent_passes():
     agent = ImageReviewAgent()
-    valid_json = json.dumps({
-        "target_artifact_id": "art_1",
-        "reviewer_agent": "image_review_agent",
-        "passed": True,
-        "review_score": 95.0,
-        "confidence": 0.98,
-        "issues": []
-    })
+    valid_json = json.dumps(
+        {
+            "target_artifact_id": "art_1",
+            "reviewer_agent": "image_review_agent",
+            "passed": True,
+            "review_score": 95.0,
+            "confidence": 0.98,
+            "issues": [],
+        }
+    )
     executor = MockJSONProvider(valid_json)
-    ctx = AgentContext(task_id="t1", goal_id="g1", project_id="p1", target_agent_type="IMAGE_REVIEW", sections=[])
+    ctx = AgentContext(
+        task_id="t1", goal_id="g1", project_id="p1", target_agent_type="IMAGE_REVIEW", sections=[]
+    )
 
     result = await agent.execute(ctx, executor)
     assert result.success is True

@@ -1,24 +1,26 @@
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any
 import time
+from abc import ABC, abstractmethod
+from typing import Dict, List, Optional
 
+from backend.capabilities.providers.base_provider import BaseProvider
 from backend.contracts.capability import (
-    CapabilityType,
     CapabilityDescriptor,
+    CapabilityType,
+    ResolvedProvider,
     ToolRequest,
     ToolResponse,
-    ResolvedProvider,
 )
-from backend.capabilities.providers.base_provider import BaseProvider
 
 
 class ProviderNotFoundError(Exception):
     """Raised when no healthy provider can be resolved for a CapabilityType."""
+
     pass
 
 
 class CapabilityNotRegisteredError(Exception):
     """Raised when a CapabilityType has no registered providers."""
+
     pass
 
 
@@ -185,7 +187,7 @@ class CapabilityRegistry:
         """Retrieve the CapabilityDescriptor for a given provider."""
         provider = self.get_provider(capability_type, provider_name)
         if hasattr(provider, "descriptor"):
-            return provider.descriptor
+            return provider.descriptor  # type: ignore[no-any-return]
         return CapabilityDescriptor(
             capability_type=capability_type,
             provider_name=provider_name,
@@ -230,7 +232,7 @@ class CapabilityRegistry:
             resolved = self.resolve(request)
             response = resolved.provider_instance.execute(request)
             response.execution_time_ms = round(time.monotonic() * 1000 - start_ms, 3)
-            return response
+            return response  # type: ignore[no-any-return]
         except ProviderNotFoundError as exc:
             return ToolResponse(
                 request_id=request.request_id,
@@ -255,4 +257,3 @@ class CapabilityRegistry:
     def execute_tool(self, request: ToolRequest) -> ToolResponse:
         """Public API Alias for execute()."""
         return self.execute(request)
-

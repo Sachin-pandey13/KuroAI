@@ -3,21 +3,24 @@ Test: Project State Engine (Milestone 2)
 Validates that the ProjectStateEngine correctly owns project state
 and references artifacts by ID from the ArtifactRegistry.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+
+from backend.contracts.artifact import Artifact, ArtifactType
+from backend.contracts.goal import CreativeGoal, GoalStatus
+from backend.contracts.project_state import AutonomyLevel
 from backend.engine.artifact_registry import ArtifactRegistry
 from backend.engine.state_engine import (
-    ProjectStateEngine,
-    ProjectNotFoundError,
-    ArtifactNotRegisteredError,
     ArtifactAlreadyAttachedError,
+    ArtifactNotRegisteredError,
+    ProjectNotFoundError,
+    ProjectStateEngine,
 )
-from backend.contracts.artifact import Artifact, ArtifactType
-from backend.contracts.goal import CreativeGoal, GoalStatus, GoalPriority
-from backend.contracts.project_state import AutonomyLevel
 
 
 @pytest.fixture
@@ -79,7 +82,7 @@ class TestGetState:
 
     def test_set_active_project(self, engine):
         p1 = engine.create_project("P1", "First")
-        p2 = engine.create_project("P2", "Second")
+        engine.create_project("P2", "Second")
         # p2 is active (last created)
         assert engine.get_state().title == "P2"
         engine.set_active_project(p1.project_id)
@@ -102,11 +105,13 @@ class TestAddGoal:
     def test_add_multiple_goals(self, engine):
         engine.create_project("Test", "Desc")
         for i in range(3):
-            engine.add_goal(CreativeGoal(
-                title=f"Goal {i}",
-                description=f"Description {i}",
-                target_milestone=f"MILESTONE_{i}",
-            ))
+            engine.add_goal(
+                CreativeGoal(
+                    title=f"Goal {i}",
+                    description=f"Description {i}",
+                    target_milestone=f"MILESTONE_{i}",
+                )
+            )
         assert len(engine.get_state().active_goals) == 3
 
     def test_update_goal_status(self, engine):
@@ -217,6 +222,7 @@ class TestTransactionStubs:
 # Behavioral / Integration Tests
 # =====================================================================
 
+
 class TestBehavioralScenarios:
     """
     End-to-end behavioral tests validating the Artifact Registry ↔
@@ -264,11 +270,13 @@ class TestBehavioralScenarios:
         """
         Mutate Project Metadata → Reload State → Metadata persists.
         """
-        state = engine.create_project("Meta Project", "Testing metadata")
-        engine.mutate_state({
-            "metadata": {"genre": "horror", "chapters": 12},
-            "style_guidelines": {"palette": "dark"},
-        })
+        engine.create_project("Meta Project", "Testing metadata")
+        engine.mutate_state(
+            {
+                "metadata": {"genre": "horror", "chapters": 12},
+                "style_guidelines": {"palette": "dark"},
+            }
+        )
         reloaded = engine.get_state()
         assert reloaded.metadata["genre"] == "horror"
         assert reloaded.metadata["chapters"] == 12

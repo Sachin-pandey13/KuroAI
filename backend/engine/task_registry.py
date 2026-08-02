@@ -1,21 +1,25 @@
-from typing import Optional, Dict, List, Any, Set
 from datetime import datetime
-from backend.contracts.task import Task, TaskStatus
+from typing import Any, Dict, List, Optional, Set
+
 from backend.contracts.event import Event, EventType
+from backend.contracts.task import Task, TaskStatus
 
 
 class TaskNotFoundError(Exception):
     """Raised when a task ID does not exist in the registry."""
+
     pass
 
 
 class TaskAlreadyExistsError(Exception):
     """Raised when attempting to register a task with a duplicate ID."""
+
     pass
 
 
 class InvalidTaskTransitionError(Exception):
     """Raised when an invalid task status transition is attempted."""
+
     pass
 
 
@@ -29,9 +33,24 @@ class TaskRegistry:
     """
 
     VALID_TRANSITIONS: Dict[TaskStatus, Set[TaskStatus]] = {
-        TaskStatus.QUEUED: {TaskStatus.SCHEDULED, TaskStatus.RUNNING, TaskStatus.BLOCKED, TaskStatus.FAILED},
-        TaskStatus.SCHEDULED: {TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.BLOCKED, TaskStatus.FAILED},
-        TaskStatus.RUNNING: {TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.QUEUED, TaskStatus.BLOCKED},
+        TaskStatus.QUEUED: {
+            TaskStatus.SCHEDULED,
+            TaskStatus.RUNNING,
+            TaskStatus.BLOCKED,
+            TaskStatus.FAILED,
+        },
+        TaskStatus.SCHEDULED: {
+            TaskStatus.RUNNING,
+            TaskStatus.QUEUED,
+            TaskStatus.BLOCKED,
+            TaskStatus.FAILED,
+        },
+        TaskStatus.RUNNING: {
+            TaskStatus.COMPLETED,
+            TaskStatus.FAILED,
+            TaskStatus.QUEUED,
+            TaskStatus.BLOCKED,
+        },
         TaskStatus.FAILED: {TaskStatus.QUEUED, TaskStatus.BLOCKED, TaskStatus.FAILED},
         TaskStatus.BLOCKED: {TaskStatus.QUEUED, TaskStatus.SCHEDULED, TaskStatus.FAILED},
         TaskStatus.COMPLETED: set(),  # Terminal state
@@ -85,7 +104,9 @@ class TaskRegistry:
         task = self.get_task(task_id)
         current_status = task.status
 
-        if new_status != current_status and new_status not in self.VALID_TRANSITIONS.get(current_status, set()):
+        if new_status != current_status and new_status not in self.VALID_TRANSITIONS.get(
+            current_status, set()
+        ):
             raise InvalidTaskTransitionError(
                 f"Cannot transition task '{task_id}' from '{current_status.value}' to '{new_status.value}'."
             )

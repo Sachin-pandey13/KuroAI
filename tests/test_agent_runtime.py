@@ -7,41 +7,45 @@ Verifies Stages 1-7:
 - AgentRuntime coordinator (end-to-end task execution, batch execution, error cascade, single publisher rule)
 - Specialized Agents (StoryAgent, ImageAgent execution with DecisionTrace & provenance)
 """
-import sys
-import os
+
 import asyncio
+import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from backend.contracts.task import Task, TaskPriority, TaskStatus
+from backend.agents.agent_registry import (
+    AgentAlreadyRegisteredError,
+    AgentNotFoundError,
+    AgentRegistry,
+)
+from backend.agents.base_agent import BaseAgent
+from backend.agents.image_agent import ImageAgent
+from backend.agents.runtime import AgentRuntime
+from backend.agents.runtime_transaction import RuntimeTransaction
+from backend.agents.story_agent import StoryAgent
+from backend.agents.tool_executor import CapabilityToolExecutor, MockToolExecutor
+from backend.capabilities.providers.mock_image_provider import MockImageProvider
+from backend.capabilities.providers.mock_text_provider import MockTextProvider
+from backend.capabilities.registry import CapabilityRegistry
 from backend.contracts.agent import AgentResult, BatchResult
+from backend.contracts.artifact import Artifact, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
 from backend.contracts.event import Event, EventType
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest, ToolResponse
-
+from backend.contracts.task import Task
 from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.version_graph import VersionGraph
 from backend.engine.dependency_graph import DependencyGraph
 from backend.engine.event_bus import EventBus
-from backend.engine.task_registry import TaskRegistry
 from backend.engine.scheduler import TaskScheduler
-from backend.capabilities.registry import CapabilityRegistry
-from backend.capabilities.providers.mock_text_provider import MockTextProvider
-from backend.capabilities.providers.mock_image_provider import MockImageProvider
-
-from backend.agents.agent_registry import AgentRegistry, AgentNotFoundError, AgentAlreadyRegisteredError
-from backend.agents.tool_executor import BaseToolExecutor, CapabilityToolExecutor, MockToolExecutor
-from backend.agents.runtime_transaction import RuntimeTransaction, TransactionError
-from backend.agents.runtime import AgentRuntime
-from backend.agents.story_agent import StoryAgent
-from backend.agents.image_agent import ImageAgent
-from backend.agents.base_agent import BaseAgent
-
+from backend.engine.task_registry import TaskRegistry
+from backend.engine.version_graph import VersionGraph
 
 # =====================================================================
 # Fixtures
 # =====================================================================
+
 
 @pytest.fixture
 def artifact_registry():
@@ -90,7 +94,9 @@ def agent_registry():
 
 
 @pytest.fixture
-def runtime(agent_registry, capability_registry, artifact_registry, version_graph, scheduler, event_bus):
+def runtime(
+    agent_registry, capability_registry, artifact_registry, version_graph, scheduler, event_bus
+):
     return AgentRuntime(
         agent_registry=agent_registry,
         capability_registry=capability_registry,
@@ -104,6 +110,7 @@ def runtime(agent_registry, capability_registry, artifact_registry, version_grap
 # =====================================================================
 # Unit Tests — AgentRegistry
 # =====================================================================
+
 
 class TestAgentRegistry:
     def test_register_and_lookup(self):
@@ -145,6 +152,7 @@ class TestAgentRegistry:
 # Unit Tests — ToolExecutor Injection
 # =====================================================================
 
+
 class TestToolExecutor:
     @pytest.mark.asyncio
     async def test_mock_tool_executor(self):
@@ -170,6 +178,7 @@ class TestToolExecutor:
 # Unit Tests — RuntimeTransaction
 # =====================================================================
 
+
 class TestRuntimeTransaction:
     def test_atomic_commit(self, artifact_registry, version_graph, event_bus):
         events_received = []
@@ -194,7 +203,14 @@ class TestRuntimeTransaction:
 
         txn.stage_artifact(art)
         txn.stage_version(art.artifact_id, art.data, art.metadata, art.owner_agent)
-        txn.stage_event(Event(project_id="p1", event_type=EventType.ARTIFACT_CREATED, source_agent_id="test", payload={"id": art.artifact_id}))
+        txn.stage_event(
+            Event(
+                project_id="p1",
+                event_type=EventType.ARTIFACT_CREATED,
+                source_agent_id="test",
+                payload={"id": art.artifact_id},
+            )
+        )
 
         txn.commit()
 
@@ -229,11 +245,18 @@ class TestRuntimeTransaction:
 # Integration Tests — AgentRuntime & Specialized Agents
 # =====================================================================
 
+
 class TestAgentRuntimePipeline:
     @pytest.mark.asyncio
-    async def test_story_agent_execution_pipeline(self, runtime, task_registry, artifact_registry, version_graph, event_bus):
+    async def test_story_agent_execution_pipeline(
+        self, runtime, task_registry, artifact_registry, version_graph, event_bus
+    ):
         events = []
-        for evt_type in [EventType.AGENT_STARTED, EventType.AGENT_COMPLETED, EventType.TASK_COMPLETED]:
+        for evt_type in [
+            EventType.AGENT_STARTED,
+            EventType.AGENT_COMPLETED,
+            EventType.TASK_COMPLETED,
+        ]:
             event_bus.subscribe(evt_type, lambda e: events.append(e.event_type))
 
         task = Task(
@@ -308,7 +331,12 @@ class TestAgentRuntimePipeline:
 
             async def execute(self, context, tool_executor=None):
                 await asyncio.sleep(0.5)
-                return AgentResult(task_id=context.goal_id, agent_id=self.agent_id, agent_type=self.agent_type, success=True)
+                return AgentResult(
+                    task_id=context.goal_id,
+                    agent_id=self.agent_id,
+                    agent_type=self.agent_type,
+                    success=True,
+                )
 
         agent_registry.register_agent(SlowAgent())
 

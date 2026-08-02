@@ -4,8 +4,15 @@ Benchmark for ContextEngine context assembly under varying artifact scale.
 
 import time
 import tracemalloc
-from backend.contracts import Task, TaskStatus, TaskPriority, Artifact, ArtifactType, ArtifactState, DependencyNode
-from backend.engine import ArtifactRegistry, DependencyGraph, VersionGraph, ContextEngine
+
+from backend.contracts import (
+    Artifact,
+    ArtifactState,
+    ArtifactType,
+    DependencyNode,
+    Task,
+)
+from backend.engine import ArtifactRegistry, ContextEngine, DependencyGraph, VersionGraph
 
 
 def benchmark_context_engine(num_artifacts: int = 1000):
@@ -27,7 +34,9 @@ def benchmark_context_engine(num_artifacts: int = 1000):
             content=f"Sample content for artifact {i}",
         )
         art_reg.register(art)
-        dep_graph.add_node(DependencyNode(artifact_id=art_id, artifact_type=ArtifactType.STORY_OUTLINE))
+        dep_graph.add_node(
+            DependencyNode(artifact_id=art_id, artifact_type=ArtifactType.STORY_OUTLINE)
+        )
         ver_graph.add_version(art_id, version=1, content_hash=f"hash_{i}")
 
     ctx_engine = ContextEngine(art_reg, dep_graph, ver_graph)

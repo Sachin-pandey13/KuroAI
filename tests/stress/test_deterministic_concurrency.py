@@ -3,9 +3,9 @@ Deterministic concurrency test verifying TaskScheduler plan execution hashes mat
 """
 
 import hashlib
-import pytest
+
 from backend.contracts import Task, TaskPriority
-from backend.engine import TaskRegistry, TaskScheduler, DependencyGraph
+from backend.engine import DependencyGraph, TaskRegistry, TaskScheduler
 
 
 def _generate_plan_hash() -> str:

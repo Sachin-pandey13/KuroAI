@@ -1,8 +1,10 @@
-from enum import Enum
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
-from datetime import datetime
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List
+
+from pydantic import BaseModel, Field
+
 from backend.contracts.artifact import Artifact
 from backend.contracts.goal import CreativeGoal
 
@@ -18,6 +20,7 @@ class ProjectStateModel(BaseModel):
     Complete state representation of a KuroAI 2.0 Manga Project.
     Single Source of Truth (Fourth Law).
     """
+
     project_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str

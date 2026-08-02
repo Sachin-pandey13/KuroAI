@@ -1,24 +1,28 @@
 import copy
-from typing import List, Dict, Any, Optional
 from datetime import datetime
-from backend.contracts.version import VersionEntry, DiffResult
+from typing import Any, Dict, List, Optional
+
 from backend.contracts.event import Event, EventType
-from backend.engine.artifact_registry import ArtifactRegistry, ArtifactNotFoundError
-from backend.engine.dependency_graph import DependencyGraph, NodeNotFoundError
+from backend.contracts.version import DiffResult, VersionEntry
+from backend.engine.artifact_registry import ArtifactRegistry
+from backend.engine.dependency_graph import DependencyGraph
 
 
 class VersionNotFoundError(Exception):
     """Raised when a specific version number does not exist for an artifact."""
+
     pass
 
 
 class ArtifactHistoryNotFoundError(Exception):
     """Raised when requesting version history for an artifact that has no recorded versions."""
+
     pass
 
 
 class InvalidVersionError(Exception):
     """Raised when an invalid version parameter is supplied."""
+
     pass
 
 
@@ -42,9 +46,13 @@ class VersionGraph:
     # Stage 2 — Version Graph Core Operations
     # ------------------------------------------------------------------
 
-    def add_version(self, artifact_id: str, version: int = 1, content_hash: str = "") -> VersionEntry:
+    def add_version(
+        self, artifact_id: str, version: int = 1, content_hash: str = ""
+    ) -> VersionEntry:
         """Public API Alias for record_version."""
-        return self.record_version(artifact_id, {"content_hash": content_hash}, {"version": version})
+        return self.record_version(
+            artifact_id, {"content_hash": content_hash}, {"version": version}
+        )
 
     def record_version(
         self,
@@ -90,18 +98,21 @@ class VersionGraph:
     def get_latest(self, artifact_id: str) -> VersionEntry:
         """Fetch the current HEAD version snapshot for an artifact."""
         if not self.has_history(artifact_id):
-            raise ArtifactHistoryNotFoundError(f"No version history found for artifact '{artifact_id}'.")
+            raise ArtifactHistoryNotFoundError(
+                f"No version history found for artifact '{artifact_id}'."
+            )
         return self._timelines[artifact_id][-1]
 
     def get_latest_version(self, artifact_id: str) -> VersionEntry:
         """Public API Alias for get_latest."""
         return self.get_latest(artifact_id)
 
-
     def get_version(self, artifact_id: str, version_number: int) -> VersionEntry:
         """Fetch a specific historical version snapshot by version number."""
         if not self.has_history(artifact_id):
-            raise ArtifactHistoryNotFoundError(f"No version history found for artifact '{artifact_id}'.")
+            raise ArtifactHistoryNotFoundError(
+                f"No version history found for artifact '{artifact_id}'."
+            )
 
         timeline = self._timelines[artifact_id]
         if version_number < 1 or version_number > len(timeline):
@@ -114,7 +125,9 @@ class VersionGraph:
     def get_history(self, artifact_id: str) -> List[VersionEntry]:
         """Return the complete ordered version history timeline for an artifact."""
         if not self.has_history(artifact_id):
-            raise ArtifactHistoryNotFoundError(f"No version history found for artifact '{artifact_id}'.")
+            raise ArtifactHistoryNotFoundError(
+                f"No version history found for artifact '{artifact_id}'."
+            )
         return list(self._timelines[artifact_id])
 
     def has_history(self, artifact_id: str) -> bool:
@@ -308,4 +321,3 @@ class VersionGraph:
                 created_by=created_by,
                 change_summary=summary,
             )
-

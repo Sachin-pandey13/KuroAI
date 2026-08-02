@@ -13,7 +13,9 @@ This decoupling makes it trivial to swap in:
 
 Each is a decorator over BaseToolExecutor. The domain agents never change.
 """
+
 from abc import ABC, abstractmethod
+
 from backend.contracts.capability import ToolRequest, ToolResponse
 
 
@@ -42,7 +44,7 @@ class CapabilityToolExecutor(BaseToolExecutor):
 
     async def execute(self, request: ToolRequest) -> ToolResponse:
         """Resolve provider and execute synchronously via the registry."""
-        return self._registry.execute(request)
+        return self._registry.execute(request)  # type: ignore[no-any-return]
 
 
 class MockToolExecutor(BaseToolExecutor):
@@ -67,7 +69,8 @@ class MockToolExecutor(BaseToolExecutor):
             # Bind request_id for tracing
             response = response.model_copy(update={"request_id": request.request_id})
             return response
-        from backend.contracts.capability import ToolResponse, CapabilityType
+        from backend.contracts.capability import ToolResponse
+
         return ToolResponse(
             request_id=request.request_id,
             success=True,

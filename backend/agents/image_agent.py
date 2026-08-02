@@ -1,11 +1,12 @@
 from typing import Optional
+
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
+from backend.contracts.context import AgentContext
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 
 
 class ImageAgent(BaseAgent):
@@ -70,7 +71,11 @@ class ImageAgent(BaseAgent):
                 capability_used.append(str(CapabilityType.GENERATE_IMAGE))
 
         project_id = "default_project"
-        if context.sections and context.sections[0].content and isinstance(context.sections[0].content, dict):
+        if (
+            context.sections
+            and context.sections[0].content
+            and isinstance(context.sections[0].content, dict)
+        ):
             project_id = context.sections[0].content.get("project_id", project_id)
 
         decision_trace = DecisionTrace(

@@ -1,20 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Set
-from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from backend.contracts.task import Task, TaskStatus, TaskPriority, ExecutionPlan
-from backend.contracts.execution_plan import (
-    ExecutionPlan as ExecutionPlanModel,
-    validate_execution_plan,
-    ExecutionPlanValidationError,
-)
-from backend.contracts.dependency import DependencyNode
 from backend.contracts.artifact import Artifact, ArtifactState
 from backend.contracts.event import Event, EventType
-from backend.engine.task_registry import TaskRegistry
-from backend.engine.dependency_graph import DependencyGraph
+from backend.contracts.execution_plan import (
+    ExecutionPlan as ExecutionPlanModel,
+)
+from backend.contracts.execution_plan import (
+    validate_execution_plan,
+)
+from backend.contracts.task import ExecutionPlan, Task, TaskPriority, TaskStatus
 from backend.engine.artifact_registry import ArtifactRegistry
+from backend.engine.dependency_graph import DependencyGraph
 from backend.engine.state_engine import ProjectStateEngine
+from backend.engine.task_registry import TaskRegistry
 
 
 class BaseReadinessEvaluator(ABC):
@@ -65,7 +64,7 @@ class HumanApprovalEvaluator(BaseReadinessEvaluator):
     Evaluator enforcing Human Review Control Gates.
     If a task requires human approval (via payload['human_review_gate_id']),
     execution is paused until an APPROVE action is recorded.
-    
+
     Revisions (MINOR_REVISION, MAJOR_REVISION) mark existing artifacts as STALE,
     allowing new versions to be produced without mutating history.
     """
@@ -181,7 +180,6 @@ class TaskScheduler:
         if self._task_registry.exists(task_id):
             self._task_registry.block(task_id, reason=reason)
 
-
     def load_execution_plan(
         self,
         plan_artifact: Artifact,
@@ -261,10 +259,9 @@ class TaskScheduler:
         Return all tasks currently READY to execute (status SCHEDULED or QUEUED with satisfied dependencies).
         Tasks are sorted deterministically by topological DAG position first, then priority (CRITICAL -> LOW).
         """
-        queued_and_scheduled = (
-            self._task_registry.list_by_status(TaskStatus.QUEUED)
-            + self._task_registry.list_by_status(TaskStatus.SCHEDULED)
-        )
+        queued_and_scheduled = self._task_registry.list_by_status(
+            TaskStatus.QUEUED
+        ) + self._task_registry.list_by_status(TaskStatus.SCHEDULED)
 
         ready_tasks: List[Task] = []
         for task in queued_and_scheduled:
@@ -337,7 +334,7 @@ class TaskScheduler:
         Mark a task as COMPLETED in TaskRegistry.
         Re-evaluates queue readiness for downstream blocked tasks.
         """
-        task = self._task_registry.complete(task_id)
+        self._task_registry.complete(task_id)
 
         # Unblock downstream tasks if their dependencies are now met
         for blocked_task in self._task_registry.list_by_status(TaskStatus.BLOCKED):
@@ -376,7 +373,10 @@ class TaskScheduler:
     def _cascade_blocked(self, failed_task_id: str, reason: str) -> None:
         """Mark all tasks depending on failed_task_id as BLOCKED."""
         for t in self._task_registry.list_all():
-            if failed_task_id in t.required_dependencies and t.status in (TaskStatus.QUEUED, TaskStatus.SCHEDULED):
+            if failed_task_id in t.required_dependencies and t.status in (
+                TaskStatus.QUEUED,
+                TaskStatus.SCHEDULED,
+            ):
                 self._task_registry.block(t.task_id, reason=reason)
 
     def build_execution_plan(self) -> ExecutionPlan:
@@ -415,7 +415,10 @@ class TaskScheduler:
             for t in ordered_tasks:
                 if not current_group:
                     current_group.append(t)
-                elif any(dep in t.required_dependencies for dep in [gt.payload.get("artifact_id") for gt in current_group]):
+                elif any(
+                    dep in t.required_dependencies
+                    for dep in [gt.payload.get("artifact_id") for gt in current_group]
+                ):
                     parallel_groups.append(current_group)
                     current_group = [t]
                 else:
@@ -452,4 +455,3 @@ class TaskScheduler:
                 payload={"artifact_id": art_id, "project_id": event.project_id},
             )
             self.schedule_task(task)
-

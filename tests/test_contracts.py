@@ -3,8 +3,9 @@ Test: Contract Validation (Milestone 1)
 Verifies all contracts import cleanly, serialize/deserialize correctly,
 and have zero circular dependencies.
 """
-import sys
+
 import os
+import sys
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -14,7 +15,8 @@ import pytest
 
 class TestGoalContract:
     def test_goal_creation(self):
-        from backend.contracts.goal import CreativeGoal, GoalStatus, GoalPriority
+        from backend.contracts.goal import CreativeGoal, GoalPriority, GoalStatus
+
         goal = CreativeGoal(
             title="Create Chapter 1",
             description="Draft the opening chapter of the manga",
@@ -26,6 +28,7 @@ class TestGoalContract:
 
     def test_goal_serialization(self):
         from backend.contracts.goal import CreativeGoal
+
         goal = CreativeGoal(
             title="Test Goal",
             description="Test",
@@ -40,6 +43,7 @@ class TestGoalContract:
 class TestTaskContract:
     def test_task_creation(self):
         from backend.contracts.task import Task, TaskStatus
+
         task = Task(
             goal_id="goal-123",
             target_agent_type="STORY",
@@ -51,6 +55,7 @@ class TestTaskContract:
 
     def test_task_serialization(self):
         from backend.contracts.task import Task
+
         task = Task(
             goal_id="goal-123",
             target_agent_type="STORY",
@@ -64,6 +69,7 @@ class TestTaskContract:
 class TestEventContract:
     def test_event_creation(self):
         from backend.contracts.event import Event, EventType
+
         event = Event(
             event_type=EventType.GOAL_PUBLISHED,
             project_id="proj-001",
@@ -75,6 +81,7 @@ class TestEventContract:
 class TestDecisionTraceContract:
     def test_decision_trace_creation(self):
         from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
+
         provenance = ExecutionProvenance(
             model_name="flux-dev",
             provider_name="ComfyUI",
@@ -93,9 +100,8 @@ class TestDecisionTraceContract:
 
     def test_confidence_bounds(self):
         from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-        provenance = ExecutionProvenance(
-            model_name="test", provider_name="test", prompt="test"
-        )
+
+        provenance = ExecutionProvenance(model_name="test", provider_name="test", prompt="test")
         with pytest.raises(Exception):
             DecisionTrace(
                 agent_id="test",
@@ -108,6 +114,7 @@ class TestDecisionTraceContract:
 class TestArtifactContract:
     def test_artifact_creation(self):
         from backend.contracts.artifact import Artifact, ArtifactType
+
         artifact = Artifact(
             project_id="proj-001",
             artifact_type=ArtifactType.CHARACTER_PROFILE,
@@ -122,6 +129,7 @@ class TestArtifactContract:
 
     def test_artifact_lineage_fields(self):
         from backend.contracts.artifact import Artifact, ArtifactType
+
         parent = Artifact(
             project_id="proj-001",
             artifact_type=ArtifactType.STORY_OUTLINE,
@@ -140,8 +148,9 @@ class TestArtifactContract:
 
 class TestDependencyContract:
     def test_dependency_node_creation(self):
-        from backend.contracts.dependency import DependencyNode
         from backend.contracts.artifact import ArtifactState
+        from backend.contracts.dependency import DependencyNode
+
         node = DependencyNode(
             artifact_id="art-001",
             artifact_type="STORY_OUTLINE",
@@ -152,6 +161,7 @@ class TestDependencyContract:
 
     def test_dependency_edge_creation(self):
         from backend.contracts.dependency import DependencyEdge, EdgeType
+
         edge = DependencyEdge(
             source_artifact_id="art-001",
             target_artifact_id="art-002",
@@ -161,7 +171,8 @@ class TestDependencyContract:
 
 class TestProjectStateContract:
     def test_project_state_creation(self):
-        from backend.contracts.project_state import ProjectStateModel, AutonomyLevel
+        from backend.contracts.project_state import AutonomyLevel, ProjectStateModel
+
         state = ProjectStateModel(
             title="My Manga",
             description="A dark fantasy manga",
@@ -174,6 +185,7 @@ class TestProjectStateContract:
 class TestContextContract:
     def test_context_policy_creation(self):
         from backend.contracts.context import ContextPolicy
+
         policy = ContextPolicy(
             agent_type="STORY",
             required_artifact_types=["STORY_OUTLINE", "CHARACTER_PROFILE"],
@@ -185,6 +197,7 @@ class TestContextContract:
 
     def test_agent_context_creation(self):
         from backend.contracts.context import AgentContext
+
         ctx = AgentContext(
             task_id="task-001",
             project_id="proj-001",
@@ -195,7 +208,8 @@ class TestContextContract:
 
 class TestCapabilityContract:
     def test_tool_request_creation(self):
-        from backend.contracts.capability import ToolRequest, CapabilityType
+        from backend.contracts.capability import CapabilityType, ToolRequest
+
         req = ToolRequest(
             capability_type=CapabilityType.GENERATE_IMAGE,
             parameters={"prompt": "samurai in rain", "seed": 42},
@@ -203,7 +217,8 @@ class TestCapabilityContract:
         assert req.capability_type == CapabilityType.GENERATE_IMAGE
 
     def test_tool_response_creation(self):
-        from backend.contracts.capability import ToolResponse, CapabilityType
+        from backend.contracts.capability import CapabilityType, ToolResponse
+
         resp = ToolResponse(
             success=True,
             capability_type=CapabilityType.GENERATE_IMAGE,
@@ -217,6 +232,7 @@ class TestCapabilityContract:
 class TestAgentContract:
     def test_agent_result_creation(self):
         from backend.contracts.agent import AgentResult
+
         result = AgentResult(
             task_id="task-001",
             agent_id="story_agent",

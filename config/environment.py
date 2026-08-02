@@ -4,6 +4,7 @@ Environment variable configuration loader for KuroAI.
 
 import os
 from typing import Optional
+
 from config import defaults
 
 

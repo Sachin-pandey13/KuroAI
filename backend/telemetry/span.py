@@ -4,7 +4,7 @@ Span model for distributed tracing in KuroAI.
 
 import time
 import uuid
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 
 class Span:
@@ -43,11 +43,13 @@ class Span:
 
     def add_event(self, name: str, attributes: Optional[Dict[str, Any]] = None) -> "Span":
         """Add an event timestamped relative to span execution."""
-        self.events.append({
-            "name": name,
-            "timestamp": time.time(),
-            "attributes": attributes or {},
-        })
+        self.events.append(
+            {
+                "name": name,
+                "timestamp": time.time(),
+                "attributes": attributes or {},
+            }
+        )
         return self
 
     def set_status(self, status: str, description: Optional[str] = None) -> "Span":

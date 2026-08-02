@@ -2,13 +2,14 @@
 Rate limiting utilities — token bucket and sliding window implementations.
 """
 
-import time
 import threading
+import time
 from collections import deque
 
 
 class RateLimitExceededError(Exception):
     """Raised when a rate limit is exceeded."""
+
     pass
 
 

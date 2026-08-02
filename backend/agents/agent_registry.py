@@ -9,17 +9,21 @@ Mirrors the architecture established by:
 
 The AgentRuntime resolves agents by agent_type via this registry.
 """
+
 from typing import Dict, List
+
 from backend.agents.base_agent import BaseAgent
 
 
 class AgentNotFoundError(Exception):
     """Raised when no agent is registered for the requested agent_type."""
+
     pass
 
 
 class AgentAlreadyRegisteredError(Exception):
     """Raised when an agent_type is already registered."""
+
     pass
 
 

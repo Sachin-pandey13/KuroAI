@@ -4,28 +4,30 @@ Verifies Stages 1-4: Task Contracts, ExecutionPlan, TaskRegistry state machine,
 Readiness Evaluators, Topological & Priority Dispatching, Retry & BLOCKED Cascades,
 Deterministic Plan Generation, and Reactive Event Integration.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
-from backend.contracts.task import Task, TaskStatus, TaskPriority, ExecutionPlan
+
+from backend.contracts.artifact import Artifact, ArtifactType
 from backend.contracts.event import Event, EventType
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.engine.task_registry import (
-    TaskRegistry,
-    TaskNotFoundError,
-    TaskAlreadyExistsError,
-    InvalidTaskTransitionError,
-)
+from backend.contracts.task import ExecutionPlan, Task, TaskPriority, TaskStatus
+from backend.engine.artifact_registry import ArtifactRegistry
+from backend.engine.dependency_graph import DependencyGraph
+from backend.engine.event_bus import EventBus
 from backend.engine.scheduler import (
-    TaskScheduler,
     BaseReadinessEvaluator,
     DAGReadinessEvaluator,
+    TaskScheduler,
 )
-from backend.engine.dependency_graph import DependencyGraph
-from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.event_bus import EventBus, EventDeliveryError
+from backend.engine.task_registry import (
+    InvalidTaskTransitionError,
+    TaskAlreadyExistsError,
+    TaskRegistry,
+)
 
 
 @pytest.fixture
@@ -61,6 +63,7 @@ def scheduler(task_registry, dep_graph, registry, bus) -> TaskScheduler:
 # =====================================================================
 # Unit Tests — TaskRegistry State Machine & Storage
 # =====================================================================
+
 
 class TestTaskRegistry:
     def test_register_and_get_task(self, task_registry):
@@ -110,6 +113,7 @@ class TestTaskRegistry:
 # Unit Tests — Readiness Evaluator Strategy
 # =====================================================================
 
+
 class TestReadinessEvaluator:
     def test_dag_readiness_evaluator(self, task_registry, dep_graph, registry):
         evaluator = DAGReadinessEvaluator()
@@ -119,7 +123,7 @@ class TestReadinessEvaluator:
             "artifact_registry": registry,
         }
 
-        art = Artifact(
+        Artifact(
             artifact_id="art-01",
             project_id="p1",
             artifact_type=ArtifactType.STORY_OUTLINE,
@@ -130,7 +134,9 @@ class TestReadinessEvaluator:
         dep_graph.create_node("art-02", "SCENE_SCRIPT")
         dep_graph.connect("art-01", "art-02")
 
-        task_downstream = Task(goal_id="g1", target_agent_type="STORY", required_dependencies=["art-02"])
+        task_downstream = Task(
+            goal_id="g1", target_agent_type="STORY", required_dependencies=["art-02"]
+        )
         assert evaluator.is_ready(task_downstream, engines) is True
 
         # Invalidate upstream art-01 -> marks downstream art-02 STALE
@@ -155,6 +161,7 @@ class TestReadinessEvaluator:
 # =====================================================================
 # Unit & Integration Tests — TaskScheduler Dispatching & Execution Plans
 # =====================================================================
+
 
 class TestTaskSchedulerCore:
     def test_schedule_and_get_ready_tasks(self, scheduler, task_registry):
@@ -228,7 +235,12 @@ class TestTaskSchedulerCore:
 
     def test_max_retries_exceeded_fails_and_blocks_downstream(self, scheduler, task_registry, bus):
         t1 = Task(task_id="t-parent", goal_id="g1", target_agent_type="STORY", max_retries=1)
-        t2 = Task(task_id="t-child", goal_id="g1", target_agent_type="IMAGE", required_dependencies=["t-parent"])
+        t2 = Task(
+            task_id="t-child",
+            goal_id="g1",
+            target_agent_type="IMAGE",
+            required_dependencies=["t-parent"],
+        )
 
         scheduler.schedule_task(t1)
         scheduler.schedule_task(t2)

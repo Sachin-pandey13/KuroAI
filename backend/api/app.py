@@ -8,9 +8,10 @@ try:
 except ImportError:
     raise ImportError("FastAPI is required for the API server. Run: pip install fastapi uvicorn")
 
-from backend.telemetry.telemetry_manager import TelemetryManager
-from backend.resilience.recovery_manager import RecoveryManager
 import time
+
+from backend.resilience.recovery_manager import RecoveryManager
+from backend.telemetry.telemetry_manager import TelemetryManager
 
 app = FastAPI(
     title="KuroAI Platform API",
@@ -29,7 +30,9 @@ async def liveness():
     Liveness probe: confirms the process is alive and responding.
     Always returns 200 if the server is running.
     """
-    return JSONResponse(content={"status": "alive", "uptime_seconds": round(time.time() - _start_time, 1)})
+    return JSONResponse(
+        content={"status": "alive", "uptime_seconds": round(time.time() - _start_time, 1)}
+    )
 
 
 @app.get("/health/readiness", tags=["Health"])

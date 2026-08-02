@@ -9,7 +9,7 @@ def test_scene_decomposition():
         "setting": "City at night",
         "action": "Hero watches from rooftop",
         "emotion": "Brooding",
-        "visual_prompt": "dark cyberpunk city, rain, neon lights"
+        "visual_prompt": "dark cyberpunk city, rain, neon lights",
     }
 
     result = decomposer.decompose(scene)

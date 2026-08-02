@@ -4,17 +4,20 @@ Validates that the ArtifactRegistry correctly owns artifact lifecycle:
 register, get, exists, update_metadata, update_data, update_status,
 list_by_type, list_by_project, remove, and error handling.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
 from backend.engine.artifact_registry import (
-    ArtifactRegistry,
-    ArtifactNotFoundError,
     ArtifactAlreadyExistsError,
+    ArtifactNotFoundError,
+    ArtifactRegistry,
 )
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 
 
 @pytest.fixture
@@ -106,9 +109,6 @@ class TestUpdateData:
         artifact = registry.get(sample_character.artifact_id)
         assert artifact.data["hair"] == "white"
         assert artifact.data["name"] == "Kuro"  # preserved
-
-
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
 
 
 class TestUpdateState:

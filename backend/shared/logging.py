@@ -7,7 +7,6 @@ Schema:
 
 import logging
 import sys
-from typing import Optional, Dict, Any
 
 DEFAULT_LOG_FORMAT = (
     "%(asctime)s | %(levelname)-8s | %(name)s | "

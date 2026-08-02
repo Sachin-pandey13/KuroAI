@@ -23,13 +23,16 @@ Design note (future evolution):
     RuntimeTransaction would then coordinate them, keeping each subsystem
     responsible for undoing its own work.
 """
-from typing import Dict, Any, List, Optional
+
+from typing import Any, Dict, List
+
 from backend.contracts.artifact import Artifact
 from backend.contracts.event import Event
 
 
 class TransactionError(Exception):
     """Raised when a transaction commit fails."""
+
     pass
 
 
@@ -84,12 +87,14 @@ class RuntimeTransaction:
         created_by: str = "system",
     ) -> None:
         """Stage a version record for VersionGraph on commit."""
-        self._staged_versions.append({
-            "artifact_id": artifact_id,
-            "data": data,
-            "metadata": metadata,
-            "created_by": created_by,
-        })
+        self._staged_versions.append(
+            {
+                "artifact_id": artifact_id,
+                "data": data,
+                "metadata": metadata,
+                "created_by": created_by,
+            }
+        )
 
     def stage_state_updates(self, updates: Dict[str, Any]) -> None:
         """Stage project state updates to apply on commit."""
@@ -121,8 +126,7 @@ class RuntimeTransaction:
             self._commit_events()
         except Exception as exc:
             raise TransactionError(
-                f"Transaction commit failed: {exc}. "
-                f"Call rollback() to undo partial writes."
+                f"Transaction commit failed: {exc}. " f"Call rollback() to undo partial writes."
             ) from exc
 
     def _commit_artifacts(self) -> None:

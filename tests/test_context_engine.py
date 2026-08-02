@@ -4,35 +4,33 @@ Verifies Stages 1-3: Context Contracts, Selectors, Policy Registration,
 Interface-driven Retrievers, TokenEstimator, ContextCache, Budgeting Strategies (DROP & TRUNCATE),
 and End-to-End Multi-Engine Pipeline Integration.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+
+from backend.contracts.artifact import Artifact, ArtifactType
 from backend.contracts.context import (
+    BudgetStrategy,
     ContextPolicy,
-    AgentContext,
     ContextSection,
     ContextSectionType,
     ContextSelector,
-    BudgetStrategy,
 )
-from backend.contracts.task import Task
-from backend.contracts.artifact import Artifact, ArtifactType
 from backend.contracts.goal import CreativeGoal
+from backend.contracts.task import Task
+from backend.engine.artifact_registry import ArtifactRegistry
 from backend.engine.context_engine import (
+    BaseRetriever,
+    ContextCache,
     ContextEngine,
     TokenEstimator,
-    ContextCache,
-    BaseRetriever,
-    StateRetriever,
-    ArtifactRetriever,
-    GraphRetriever,
-    HistoryRetriever,
 )
-from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.state_engine import ProjectStateEngine
 from backend.engine.dependency_graph import DependencyGraph
+from backend.engine.state_engine import ProjectStateEngine
 from backend.engine.version_graph import VersionGraph
 
 
@@ -72,6 +70,7 @@ def context_engine(registry, state_engine, dep_graph, version_graph) -> ContextE
 # Unit Tests — Policy Management & Policy Lookup
 # =====================================================================
 
+
 class TestPolicyManagement:
     def test_register_and_get_custom_policy(self, context_engine):
         policy = ContextPolicy(
@@ -96,6 +95,7 @@ class TestPolicyManagement:
 # =====================================================================
 # Unit Tests — TokenEstimator & ContextCache
 # =====================================================================
+
 
 class TestEstimatorAndCache:
     def test_token_estimator_calculation(self):
@@ -125,6 +125,7 @@ class TestEstimatorAndCache:
 # =====================================================================
 # Unit Tests — Custom BaseRetriever Plugin
 # =====================================================================
+
 
 class TestCustomRetrieverPlugin:
     def test_custom_retriever_registration(self, context_engine):
@@ -159,6 +160,7 @@ class TestCustomRetrieverPlugin:
 # =====================================================================
 # Unit Tests — Budgeting Strategies (DROP & TRUNCATE)
 # =====================================================================
+
 
 class TestBudgetingStrategies:
     def test_budget_within_limit_no_truncation(self, context_engine, state_engine):
@@ -223,6 +225,7 @@ class TestBudgetingStrategies:
 # Integration Scenarios — End-to-End Context Assembly
 # =====================================================================
 
+
 class TestEndToEndContextAssembly:
     def test_full_pipeline_assembly(
         self, context_engine, registry, state_engine, dep_graph, version_graph
@@ -232,8 +235,12 @@ class TestEndToEndContextAssembly:
         Queries ProjectState, ArtifactRegistry, DependencyGraph, and VersionGraph.
         """
         # 1. State Engine Setup
-        state_engine.add_goal(CreativeGoal(title="Draw Cyberpunk Scene", description="Neon city theme"))
-        state_engine.mutate_state({"style_guidelines": {"aspect_ratio": "16:9", "palette": "neon_blue"}})
+        state_engine.add_goal(
+            CreativeGoal(title="Draw Cyberpunk Scene", description="Neon city theme")
+        )
+        state_engine.mutate_state(
+            {"style_guidelines": {"aspect_ratio": "16:9", "palette": "neon_blue"}}
+        )
 
         # 2. Registry Setup
         char_art = Artifact(
@@ -260,7 +267,9 @@ class TestEndToEndContextAssembly:
         dep_graph.connect("char-ren", "prompt-panel-1")
 
         # 4. Version Graph History
-        version_graph.record_version("prompt-panel-1", {"prompt": "Ren standing under neon billboard in rain v2"}, {})
+        version_graph.record_version(
+            "prompt-panel-1", {"prompt": "Ren standing under neon billboard in rain v2"}, {}
+        )
 
         # 5. Define ContextPolicy for IMAGE Agent
         policy = ContextPolicy(
@@ -281,7 +290,10 @@ class TestEndToEndContextAssembly:
             goal_id="g1",
             target_agent_type="IMAGE",
             action_type="GENERATE_PANEL",
-            payload={"artifact_id": "prompt-panel-1", "project_id": state_engine.get_state().project_id},
+            payload={
+                "artifact_id": "prompt-panel-1",
+                "project_id": state_engine.get_state().project_id,
+            },
         )
 
         ctx = context_engine.build_context(task)
@@ -326,8 +338,16 @@ class TestEndToEndContextAssembly:
         )
         context_engine.register_policy(policy)
 
-        task1 = Task(goal_id="g1", target_agent_type="STORY", payload={"project_id": state_engine.get_state().project_id})
-        task2 = Task(goal_id="g2", target_agent_type="STORY", payload={"project_id": state_engine.get_state().project_id})
+        task1 = Task(
+            goal_id="g1",
+            target_agent_type="STORY",
+            payload={"project_id": state_engine.get_state().project_id},
+        )
+        task2 = Task(
+            goal_id="g2",
+            target_agent_type="STORY",
+            payload={"project_id": state_engine.get_state().project_id},
+        )
 
         shared_cache = ContextCache()
 
@@ -335,4 +355,6 @@ class TestEndToEndContextAssembly:
         ctx2 = context_engine.build_context(task2, cache=shared_cache)
 
         # Both contexts retrieved identical section instance from cache
-        assert ctx1.get_section(ContextSectionType.STYLE_GUIDELINES) is ctx2.get_section(ContextSectionType.STYLE_GUIDELINES)
+        assert ctx1.get_section(ContextSectionType.STYLE_GUIDELINES) is ctx2.get_section(
+            ContextSectionType.STYLE_GUIDELINES
+        )

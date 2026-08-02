@@ -4,18 +4,21 @@ Verifies Stages 1-4: Event Contracts, EventBus pub/sub, FIFO ordering, error iso
 Atomic registration invariants, per-subsystem listener registration/unregistration,
 and Integration Scenarios 1-6.
 """
-import sys
+
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
-from backend.engine.event_bus import EventBus, EventDeliveryError
+
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.event import Event, EventType
 from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.version_graph import VersionGraph
 from backend.engine.dependency_graph import DependencyGraph
+from backend.engine.event_bus import EventBus, EventDeliveryError
 from backend.engine.state_engine import ProjectStateEngine
-from backend.contracts.event import Event, EventType, EventLog
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
+from backend.engine.version_graph import VersionGraph
 
 
 @pytest.fixture
@@ -47,6 +50,7 @@ def state_engine(registry) -> ProjectStateEngine:
 # Unit Tests — EventBus Core Mechanics
 # =====================================================================
 
+
 class TestEventBusCore:
     def test_subscribe_and_publish(self, bus):
         received = []
@@ -77,7 +81,9 @@ class TestEventBusCore:
 
     def test_unsubscribe(self, bus):
         received = []
-        callback = lambda e: received.append(e)
+
+        def callback(e):
+            return received.append(e)
 
         bus.subscribe(EventType.GOAL_UPDATED, callback)
         assert bus.listener_count(EventType.GOAL_UPDATED) == 1
@@ -159,6 +165,7 @@ class TestEventBusCore:
 # Atomic Invariant Test
 # =====================================================================
 
+
 class TestAtomicInvariants:
     def test_registration_atomic_invariant(self, bus, registry, version_graph):
         """
@@ -196,6 +203,7 @@ class TestAtomicInvariants:
 # =====================================================================
 # Integration Scenarios 1 to 6
 # =====================================================================
+
 
 class TestIntegrationScenarios:
 

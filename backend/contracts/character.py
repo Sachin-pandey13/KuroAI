@@ -1,5 +1,7 @@
-from typing import List, Optional
+from typing import List
+
 from pydantic import BaseModel, Field
+
 
 class CharacterAppearance(BaseModel):
     hair: str = Field(description="Hair style and color")
@@ -8,10 +10,12 @@ class CharacterAppearance(BaseModel):
     clothing: str = Field(description="Typical attire or specific outfit for this arc")
     distinguishing_features: str = Field(description="Scars, tattoos, or notable accessories")
 
+
 class CharacterRelationship(BaseModel):
     target_character_id: str = Field(description="ID of the character this relates to")
     relationship_type: str = Field(description="E.g., Ally, Enemy, Sibling, Mentor")
     dynamic: str = Field(description="Brief description of how they interact")
+
 
 class CharacterProfile(BaseModel):
     character_id: str = Field(description="Unique identifier for this character")

@@ -4,7 +4,8 @@ Benchmark for DependencyGraph scale (node/edge addition, BFS traversal, cycle de
 
 import time
 import tracemalloc
-from backend.contracts import DependencyNode, ArtifactType
+
+from backend.contracts import ArtifactType, DependencyNode
 from backend.engine.dependency_graph import DependencyGraph
 
 
@@ -14,7 +15,9 @@ def benchmark_dependency_graph(num_nodes: int = 5000, num_edges: int = 10000):
 
     graph = DependencyGraph()
     for i in range(num_nodes):
-        graph.add_node(DependencyNode(artifact_id=f"art_{i}", artifact_type=ArtifactType.STORY_OUTLINE))
+        graph.add_node(
+            DependencyNode(artifact_id=f"art_{i}", artifact_type=ArtifactType.STORY_OUTLINE)
+        )
 
     for i in range(num_edges):
         from_id = f"art_{i % (num_nodes - 1)}"
@@ -27,11 +30,11 @@ def benchmark_dependency_graph(num_nodes: int = 5000, num_edges: int = 10000):
     t1 = time.monotonic()
     add_duration_ms = (t1 - start_time) * 1000
 
-    cycle = graph.detect_cycles()
+    graph.detect_cycles()
     t2 = time.monotonic()
     cycle_duration_ms = (t2 - t1) * 1000
 
-    deps = graph.get_dependencies(f"art_0")
+    graph.get_dependencies("art_0")
     t3 = time.monotonic()
     bfs_duration_ms = (t3 - t2) * 1000
 

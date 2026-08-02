@@ -11,7 +11,7 @@ Verifies:
 import ast
 import sys
 from pathlib import Path
-from typing import List, Dict, Set, Tuple
+from typing import Dict, List, Tuple
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BACKEND_DIR = ROOT_DIR / "backend"
@@ -63,7 +63,7 @@ def get_python_module_name(file_path: Path) -> str:
 def validate_architecture() -> Tuple[int, List[str]]:
     errors: List[str] = []
     py_files = list(BACKEND_DIR.rglob("*.py"))
-    
+
     # 1. Check Layer Import Violations
     for file_path in py_files:
         module_name = get_python_module_name(file_path)
@@ -97,8 +97,11 @@ def validate_architecture() -> Tuple[int, List[str]]:
         if pkg_init.exists():
             tree = ast.parse(pkg_init.read_text(encoding="utf-8"))
             has_all = any(
-                isinstance(stmt, ast.Assign) and
-                any(isinstance(target, ast.Name) and target.id == "__all__" for target in stmt.targets)
+                isinstance(stmt, ast.Assign)
+                and any(
+                    isinstance(target, ast.Name) and target.id == "__all__"
+                    for target in stmt.targets
+                )
                 for stmt in tree.body
             )
             if not has_all:
@@ -118,4 +121,3 @@ if __name__ == "__main__":
         for msg in error_messages:
             print(f"  - {msg}")
         sys.exit(1)
-

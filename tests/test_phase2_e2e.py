@@ -1,40 +1,35 @@
-import pytest
-import asyncio
 from datetime import datetime
 
-from backend.contracts.task import Task, TaskStatus, TaskPriority
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
-from backend.contracts.human_review import (
-    HumanReviewGate,
-    HumanReviewAction,
-    HumanReviewCheckpoint,
-)
-
-from backend.engine.task_registry import TaskRegistry
-from backend.engine.dependency_graph import DependencyGraph
-from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.version_graph import VersionGraph
-from backend.engine.event_bus import EventBus
-from backend.engine.scheduler import TaskScheduler, HumanApprovalEvaluator
+import pytest
 
 from backend.agents.agent_registry import AgentRegistry
-from backend.agents.runtime import AgentRuntime
-from backend.agents.director_agent import DirectorAgent
-from backend.agents.story_agent import StoryAgent
-from backend.agents.scene_planner_agent import ScenePlannerAgent
 from backend.agents.character_agent import CharacterAgent
 from backend.agents.dialogue_agent import DialogueAgent
-from backend.agents.layout_agent import LayoutAgent
+from backend.agents.director_agent import DirectorAgent
+from backend.agents.export_agent import ExportAgent
 from backend.agents.image_agent import ImageAgent
 from backend.agents.image_review_agent import ImageReviewAgent
-from backend.agents.export_agent import ExportAgent
-
-from backend.capabilities.registry import CapabilityRegistry
-from backend.capabilities.providers.mock_text_provider import MockTextProvider
+from backend.agents.layout_agent import LayoutAgent
+from backend.agents.runtime import AgentRuntime
+from backend.agents.scene_planner_agent import ScenePlannerAgent
+from backend.agents.story_agent import StoryAgent
 from backend.capabilities.providers.mock_image_provider import MockImageProvider
+from backend.capabilities.providers.mock_text_provider import MockTextProvider
+from backend.capabilities.registry import CapabilityRegistry
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
 from backend.contracts.capability import CapabilityType
+from backend.contracts.human_review import (
+    HumanReviewAction,
+    HumanReviewCheckpoint,
+    HumanReviewGate,
+)
+from backend.contracts.task import Task, TaskStatus
+from backend.engine.artifact_registry import ArtifactRegistry
+from backend.engine.dependency_graph import DependencyGraph
+from backend.engine.event_bus import EventBus
+from backend.engine.scheduler import HumanApprovalEvaluator, TaskScheduler
+from backend.engine.task_registry import TaskRegistry
+from backend.engine.version_graph import VersionGraph
 
 
 @pytest.fixture
@@ -90,6 +85,7 @@ def e2e_setup():
 # =====================================================================
 # E2E Tests
 # =====================================================================
+
 
 @pytest.mark.asyncio
 async def test_full_phase2_pipeline_happy_path(e2e_setup):

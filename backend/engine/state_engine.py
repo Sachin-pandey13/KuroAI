@@ -1,23 +1,27 @@
-from typing import Optional, Dict, Any, List, Set
 from datetime import datetime
-from backend.contracts.project_state import ProjectStateModel, AutonomyLevel
-from backend.contracts.goal import CreativeGoal, GoalStatus
+from typing import Any, Dict, List, Optional, Set
+
 from backend.contracts.event import Event, EventType
-from backend.engine.artifact_registry import ArtifactRegistry, ArtifactNotFoundError
+from backend.contracts.goal import CreativeGoal, GoalStatus
+from backend.contracts.project_state import AutonomyLevel, ProjectStateModel
+from backend.engine.artifact_registry import ArtifactRegistry
 
 
 class ProjectNotFoundError(Exception):
     """Raised when a project ID does not exist."""
+
     pass
 
 
 class ArtifactNotRegisteredError(Exception):
     """Raised when attempting to attach an artifact that doesn't exist in the ArtifactRegistry."""
+
     pass
 
 
 class ArtifactAlreadyAttachedError(Exception):
     """Raised when attempting to attach an artifact that is already referenced by the project."""
+
     pass
 
 
@@ -34,7 +38,9 @@ class ProjectStateEngine:
         ProjectStateEngine.attach_artifact(artifact_id) → project references it
     """
 
-    def __init__(self, artifact_registry: ArtifactRegistry, event_bus: Optional[Any] = None) -> None:
+    def __init__(
+        self, artifact_registry: ArtifactRegistry, event_bus: Optional[Any] = None
+    ) -> None:
         self._artifact_registry = artifact_registry
         self._event_bus = event_bus
         self._projects: Dict[str, ProjectStateModel] = {}
@@ -42,8 +48,9 @@ class ProjectStateEngine:
         # Track which artifact IDs are attached to each project
         self._project_artifacts: Dict[str, Set[str]] = {}
 
-    def create_project(self, title: str, description: str,
-                       autonomy_level: AutonomyLevel = AutonomyLevel.GUIDED) -> ProjectStateModel:
+    def create_project(
+        self, title: str, description: str, autonomy_level: AutonomyLevel = AutonomyLevel.GUIDED
+    ) -> ProjectStateModel:
         """Initialize a new project state."""
         project = ProjectStateModel(
             title=title,
@@ -58,9 +65,7 @@ class ProjectStateEngine:
     def get_project(self, project_id: str) -> ProjectStateModel:
         """Fetch a project by ID. Raises ProjectNotFoundError if missing."""
         if project_id not in self._projects:
-            raise ProjectNotFoundError(
-                f"Project '{project_id}' not found."
-            )
+            raise ProjectNotFoundError(f"Project '{project_id}' not found.")
         return self._projects[project_id]
 
     def get_state(self) -> ProjectStateModel:
@@ -72,9 +77,7 @@ class ProjectStateEngine:
     def set_active_project(self, project_id: str) -> None:
         """Set the active project by ID."""
         if project_id not in self._projects:
-            raise ProjectNotFoundError(
-                f"Project '{project_id}' not found."
-            )
+            raise ProjectNotFoundError(f"Project '{project_id}' not found.")
         self._active_project_id = project_id
 
     def add_goal(self, goal: CreativeGoal) -> None:
@@ -104,7 +107,10 @@ class ProjectStateEngine:
                         Event(
                             event_type=EventType.GOAL_UPDATED,
                             project_id=state.project_id,
-                            payload={"goal_id": goal_id, "status": status.value if hasattr(status, "value") else str(status)},
+                            payload={
+                                "goal_id": goal_id,
+                                "status": status.value if hasattr(status, "value") else str(status),
+                            },
                         )
                     )
                 return goal
@@ -217,4 +223,3 @@ class ProjectStateEngine:
     def project_count(self) -> int:
         """Return total number of managed projects."""
         return len(self._projects)
-

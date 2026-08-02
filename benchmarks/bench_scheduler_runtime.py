@@ -4,8 +4,9 @@ Benchmark for TaskScheduler dispatch and task handling throughput.
 
 import time
 import tracemalloc
+
 from backend.contracts import Task, TaskPriority
-from backend.engine import TaskRegistry, TaskScheduler, DependencyGraph
+from backend.engine import DependencyGraph, TaskRegistry, TaskScheduler
 
 
 def benchmark_scheduler(num_tasks: int = 1000):

@@ -2,16 +2,17 @@
 Retry policy with exponential backoff and jitter.
 """
 
-import time
-import random
 import logging
-from typing import Callable, Any, Optional, Type, Tuple
+import random
+import time
+from typing import Any, Callable, Optional, Tuple, Type
 
 logger = logging.getLogger("kuroai.resilience.retry")
 
 
 class MaxRetriesExceededError(Exception):
     """Raised when all retry attempts are exhausted."""
+
     pass
 
 
@@ -41,7 +42,7 @@ class RetryPolicy:
         self.retryable_exceptions = retryable_exceptions
 
     def _compute_delay(self, attempt: int) -> float:
-        delay = min(self.base_delay * (self.backoff_factor ** attempt), self.max_delay)
+        delay = min(self.base_delay * (self.backoff_factor**attempt), self.max_delay)
         if self.jitter:
             delay = delay * (0.5 + random.random() * 0.5)
         return delay

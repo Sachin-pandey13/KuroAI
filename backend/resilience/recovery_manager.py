@@ -3,17 +3,18 @@ RecoveryManager — checkpoint-based state recovery, dead-letter queue,
 poison task detection, and graceful shutdown handling.
 """
 
-import time
-import threading
-from typing import Any, Dict, List, Optional
-from collections import deque
 import logging
+import threading
+import time
+from collections import deque
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("kuroai.resilience.recovery")
 
 
 class PoisonTaskError(Exception):
     """Raised when a task has exceeded its failure threshold and is quarantined."""
+
     pass
 
 
@@ -54,7 +55,7 @@ class RecoveryManager:
             entry = self._checkpoints.get(key)
         if entry:
             logger.info(f"Checkpoint restored: {key}")
-            return entry["state"]
+            return entry["state"]  # type: ignore[no-any-return]
         logger.warning(f"Checkpoint not found: {key}")
         return None
 
@@ -69,13 +70,17 @@ class RecoveryManager:
         with self._lock:
             self._failure_counts[task_id] = self._failure_counts.get(task_id, 0) + 1
             if self._failure_counts[task_id] >= self.max_failures:
-                self._dead_letter_queue.append({
-                    "task_id": task_id,
-                    "error": error,
-                    "failed_at": time.time(),
-                    "failure_count": self._failure_counts[task_id],
-                })
-                logger.error(f"Task {task_id} quarantined to dead-letter queue after {self._failure_counts[task_id]} failures.")
+                self._dead_letter_queue.append(
+                    {
+                        "task_id": task_id,
+                        "error": error,
+                        "failed_at": time.time(),
+                        "failure_count": self._failure_counts[task_id],
+                    }
+                )
+                logger.error(
+                    f"Task {task_id} quarantined to dead-letter queue after {self._failure_counts[task_id]} failures."
+                )
 
     def is_poison_task(self, task_id: str) -> bool:
         """Return True if task has been quarantined."""

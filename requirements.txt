@@ -1,13 +1,2 @@
-fastapi>=0.100.0
-uvicorn>=0.22.0
-pydantic>=2.0.0
-openai>=1.0.0
-pillow>=9.5.0
-pyyaml>=6.0
-requests>=2.31.0
-jsonschema>=4.0.0
-fpdf2>=2.7.0
-# Optional ML dependencies for local Stable Diffusion generation:
-# diffusers
-# transformers
-# torch
+# KuroAI root requirements delegation
+-r requirements/runtime.txt

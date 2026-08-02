@@ -4,11 +4,12 @@ Prompt Safety Validation, Path Traversal Defense, and Input Sanitization.
 
 import os
 import re
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 
 class InputValidationError(Exception):
     """Raised when user input violates prompt safety or validation rules."""
+
     pass
 
 

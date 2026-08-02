@@ -1,24 +1,27 @@
-import copy
-from typing import List, Set, Dict, Optional, Tuple, Any
-from datetime import datetime
 from collections import deque
-from backend.contracts.dependency import DependencyNode, DependencyEdge, EdgeType
-from backend.contracts.artifact import ArtifactState, ArtifactType
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+from backend.contracts.artifact import ArtifactState
+from backend.contracts.dependency import DependencyEdge, DependencyNode, EdgeType
 from backend.contracts.event import Event, EventType
 
 
 class CycleDetectedError(Exception):
     """Raised when adding an edge would create a cycle in the DAG."""
+
     pass
 
 
 class NodeNotFoundError(Exception):
     """Raised when referencing an artifact node that does not exist in the graph."""
+
     pass
 
 
 class EdgeNotFoundError(Exception):
     """Raised when referencing an edge that does not exist in the graph."""
+
     pass
 
 
@@ -55,7 +58,9 @@ class DAGAlgorithms:
         return visited_count != len(nodes)
 
     @staticmethod
-    def topological_sort(nodes: Dict[str, DependencyNode], edges: Set[Tuple[str, str]]) -> List[str]:
+    def topological_sort(
+        nodes: Dict[str, DependencyNode], edges: Set[Tuple[str, str]]
+    ) -> List[str]:
         """
         Returns a deterministic topological ordering of artifact IDs (execution order).
         Example: Story -> Character -> Prompt -> Image.
@@ -152,8 +157,9 @@ class DependencyGraph:
         if node.artifact_id not in self._nodes:
             self._nodes[node.artifact_id] = node
 
-    def create_node(self, artifact_id: str, artifact_type: str,
-                    state: ArtifactState = ArtifactState.ACTIVE) -> DependencyNode:
+    def create_node(
+        self, artifact_id: str, artifact_type: str, state: ArtifactState = ArtifactState.ACTIVE
+    ) -> DependencyNode:
         """Helper to create and register a new node in one call."""
         node = DependencyNode(
             artifact_id=artifact_id,
@@ -180,8 +186,7 @@ class DependencyGraph:
 
         # Remove edges connected to this node
         edges_to_remove = [
-            (src, tgt) for src, tgt in self._edges
-            if src == artifact_id or tgt == artifact_id
+            (src, tgt) for src, tgt in self._edges if src == artifact_id or tgt == artifact_id
         ]
         for src, tgt in edges_to_remove:
             self.remove_edge(src, tgt)
@@ -204,7 +209,7 @@ class DependencyGraph:
             target = tgt
         else:
             src = getattr(edge, "source_artifact_id", str(edge))
-            target = tgt or getattr(edge, "target_artifact_id", "")
+            target = tgt or getattr(edge, "target_artifact_id", "")  # type: ignore[assignment]
 
         if src not in self._nodes:
             raise NodeNotFoundError(f"Source node '{src}' not found in graph.")
@@ -230,8 +235,9 @@ class DependencyGraph:
         if src not in self._nodes[target].upstream_ids:
             self._nodes[target].upstream_ids.append(src)
 
-    def connect(self, source_id: str, target_id: str,
-                edge_type: EdgeType = EdgeType.EXPLICIT) -> None:
+    def connect(
+        self, source_id: str, target_id: str, edge_type: EdgeType = EdgeType.EXPLICIT
+    ) -> None:
         """Convenience method to add an edge between two node IDs."""
         edge = DependencyEdge(
             source_artifact_id=source_id,
@@ -315,7 +321,6 @@ class DependencyGraph:
     def get_dependents(self, artifact_id: str) -> List[str]:
         """Public API Alias for get_downstream."""
         return self.get_downstream(artifact_id)
-
 
     def ancestors(self, artifact_id: str) -> Set[str]:
         """Return all transitive upstream ancestor node IDs."""
@@ -429,21 +434,21 @@ class DependencyGraph:
     def get_dirty(self) -> List[DependencyNode]:
         """Return all nodes currently marked STALE, INVALID, or FAILED."""
         return [
-            n for n in self._nodes.values()
+            n
+            for n in self._nodes.values()
             if n.state in (ArtifactState.STALE, ArtifactState.INVALID, ArtifactState.FAILED)
         ]
 
     def get_dirty_by_type(self, artifact_type: str) -> List[DependencyNode]:
         """Return dirty nodes filtered by artifact type."""
-        return [
-            n for n in self.get_dirty()
-            if n.artifact_type == artifact_type
-        ]
+        return [n for n in self.get_dirty() if n.artifact_type == artifact_type]
 
     def is_dirty(self, artifact_id: str) -> bool:
         """Return True if node is STALE, INVALID, or FAILED."""
         return self.get_node(artifact_id).state in (
-            ArtifactState.STALE, ArtifactState.INVALID, ArtifactState.FAILED
+            ArtifactState.STALE,
+            ArtifactState.INVALID,
+            ArtifactState.FAILED,
         )
 
     def clear_dirty(self, artifact_id: str) -> None:
@@ -493,4 +498,3 @@ class DependencyGraph:
     def edge_count(self) -> int:
         """Total edge count."""
         return len(self._edges)
-

@@ -1,4 +1,4 @@
-name: KuroAI Release
+name: KuroAI Release & Delivery
 
 on:
   push:
@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -23,16 +25,19 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements/dev.txt
 
       - name: Run Architecture Validator
         run: python scripts/architecture_validator.py
 
       - name: Run Full Test Suite
-        run: python -m pytest tests/ -q
+        run: python -m pytest tests/ -q --ignore=tests/stress
 
-      - name: Run Benchmark Suite
+      - name: Run Benchmarks (JSON/CSV/MD)
         run: python -m benchmarks.runner
+
+      - name: Build Docker CPU Image
+        run: docker build -t kuroai:${{ github.ref_name }} .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -40,6 +45,8 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: |
             performance_report.md
+            benchmarks/performance.json
+            benchmarks/performance.csv
             ARCHITECTURE_v1.md
             PUBLIC_API.md
             CHANGELOG.md

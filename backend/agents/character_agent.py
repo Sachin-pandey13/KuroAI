@@ -1,17 +1,18 @@
 import os
 from typing import Optional
+
 from jinja2 import Environment, FileSystemLoader
-from pydantic import ValidationError
 
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext, ContextSectionType
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-from backend.agents.tool_executor import BaseToolExecutor
 from backend.agents.output_parser import OutputParser
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
 from backend.contracts.character import CharacterProfile
+from backend.contracts.context import AgentContext, ContextSectionType
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
+
 
 class CharacterAgent(BaseAgent):
     """
@@ -33,14 +34,20 @@ class CharacterAgent(BaseAgent):
         tool_executor: Optional[BaseToolExecutor] = None,
     ) -> AgentResult:
         if tool_executor is None:
-            return AgentResult(task_id=context.task_id, agent_id=self.agent_id, agent_type=self.agent_type, success=False, error_message="No tool executor provided")
+            return AgentResult(
+                task_id=context.task_id,
+                agent_id=self.agent_id,
+                agent_type=self.agent_type,
+                success=False,
+                error_message="No tool executor provided",
+            )
 
         project_id = "default_project"
         story_outline = ""
         instructions = ""
         existing_characters = []
         parent_artifact_ids = []
-        
+
         for sec in context.sections:
             if sec.section_type == ContextSectionType.ARTIFACT and isinstance(sec.content, dict):
                 if sec.content.get("artifact_type") == ArtifactType.STORY_OUTLINE.value:
@@ -58,11 +65,11 @@ class CharacterAgent(BaseAgent):
         env = Environment(loader=FileSystemLoader(os.path.join("backend", "prompts")))
         template = env.get_template("character_profile.jinja")
         prompt = template.render(
-            story_outline=story_outline, 
+            story_outline=story_outline,
             instructions=instructions,
-            existing_characters=existing_characters
+            existing_characters=existing_characters,
         )
-        
+
         prompt += f"\n\nYou MUST return a valid JSON object adhering to this JSON schema:\n{CharacterProfile.model_json_schema()}"
 
         tool_req = ToolRequest(
@@ -70,26 +77,26 @@ class CharacterAgent(BaseAgent):
             parameters={"prompt": prompt, "temperature": 0.7, "max_tokens": 2048},
         )
         tool_resp = await tool_executor.execute(tool_req)
-        
+
         if not tool_resp or not tool_resp.success:
             return AgentResult(
-                task_id=context.task_id, 
-                agent_id=self.agent_id, 
-                agent_type=self.agent_type, 
-                success=False, 
-                error_message=f"Character generation failed: {tool_resp.error_message if tool_resp else 'No response'}"
+                task_id=context.task_id,
+                agent_id=self.agent_id,
+                agent_type=self.agent_type,
+                success=False,
+                error_message=f"Character generation failed: {tool_resp.error_message if tool_resp else 'No response'}",
             )
 
         text_output = tool_resp.output_data.get("text", "")
         profile = OutputParser.parse_json(text_output, CharacterProfile)
-        
+
         if profile is None:
             return AgentResult(
                 task_id=context.task_id,
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 success=False,
-                error_message=f"JSON validation error: failed to parse CharacterProfile from model output."
+                error_message="JSON validation error: failed to parse CharacterProfile from model output.",
             )
 
         decision_trace = DecisionTrace(

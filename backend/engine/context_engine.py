@@ -1,18 +1,18 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Set
-import copy
+from typing import Any, Dict, List, Optional, Set
+
 from backend.contracts.context import (
     AgentContext,
+    BudgetStrategy,
     ContextPolicy,
     ContextSection,
     ContextSectionType,
     ContextSelector,
-    BudgetStrategy,
 )
 from backend.contracts.task import Task
 from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.state_engine import ProjectStateEngine
 from backend.engine.dependency_graph import DependencyGraph
+from backend.engine.state_engine import ProjectStateEngine
 from backend.engine.version_graph import VersionGraph
 
 
@@ -88,21 +88,14 @@ class StateRetriever(BaseRetriever):
             return cached
 
         try:
-            state = (
-                state_engine.get_project(project_id)
-                if project_id
-                else state_engine.get_state()
-            )
+            state = state_engine.get_project(project_id) if project_id else state_engine.get_state()
         except Exception:
             return None
 
         section: Optional[ContextSection] = None
 
         if selector == ContextSelector.PROJECT_STATE:
-            goals_payload = [
-                g.dict() if hasattr(g, "dict") else str(g)
-                for g in state.active_goals
-            ]
+            goals_payload = [g.dict() if hasattr(g, "dict") else str(g) for g in state.active_goals]
             content = {
                 "title": state.title,
                 "description": state.description,
@@ -160,12 +153,18 @@ class ArtifactRetriever(BaseRetriever):
         if not registry:
             return None
 
-        target_artifact_id = task.payload.get("artifact_id") or task.payload.get("target_artifact_id")
+        target_artifact_id = task.payload.get("artifact_id") or task.payload.get(
+            "target_artifact_id"
+        )
 
         if selector == ContextSelector.CHARACTER_BLUEPRINT:
             blueprints = {}
             for art in registry.list_all():
-                art_type_str = art.artifact_type.value if hasattr(art.artifact_type, "value") else str(art.artifact_type)
+                art_type_str = (
+                    art.artifact_type.value
+                    if hasattr(art.artifact_type, "value")
+                    else str(art.artifact_type)
+                )
                 if art_type_str == "CHARACTER_PROFILE":
                     blueprints[art.artifact_id] = art.data
 
@@ -188,7 +187,11 @@ class ArtifactRetriever(BaseRetriever):
             art = registry.get(target_artifact_id)
             content = {
                 "artifact_id": art.artifact_id,
-                "artifact_type": art.artifact_type.value if hasattr(art.artifact_type, "value") else str(art.artifact_type),
+                "artifact_type": (
+                    art.artifact_type.value
+                    if hasattr(art.artifact_type, "value")
+                    else str(art.artifact_type)
+                ),
                 "data": art.data,
                 "metadata": art.metadata,
             }
@@ -221,7 +224,9 @@ class GraphRetriever(BaseRetriever):
         if not dep_graph or not registry:
             return None
 
-        target_artifact_id = task.payload.get("artifact_id") or task.payload.get("target_artifact_id")
+        target_artifact_id = task.payload.get("artifact_id") or task.payload.get(
+            "target_artifact_id"
+        )
         if not target_artifact_id or not dep_graph.has_node(target_artifact_id):
             return None
 
@@ -231,7 +236,11 @@ class GraphRetriever(BaseRetriever):
             if registry.exists(anc_id):
                 art = registry.get(anc_id)
                 ancestor_payloads[anc_id] = {
-                    "artifact_type": art.artifact_type.value if hasattr(art.artifact_type, "value") else str(art.artifact_type),
+                    "artifact_type": (
+                        art.artifact_type.value
+                        if hasattr(art.artifact_type, "value")
+                        else str(art.artifact_type)
+                    ),
                     "data": art.data,
                 }
 
@@ -263,7 +272,9 @@ class HistoryRetriever(BaseRetriever):
         if not version_graph:
             return None
 
-        target_artifact_id = task.payload.get("artifact_id") or task.payload.get("target_artifact_id")
+        target_artifact_id = task.payload.get("artifact_id") or task.payload.get(
+            "target_artifact_id"
+        )
         if not target_artifact_id or not version_graph.has_history(target_artifact_id):
             return None
 
@@ -359,18 +370,17 @@ class ContextEngine:
         if retriever not in self._retrievers[selector]:
             self._retrievers[selector].append(retriever)
 
-    def register_section_provider(self, selector: ContextSelector, retriever: BaseRetriever) -> None:
+    def register_section_provider(
+        self, selector: ContextSelector, retriever: BaseRetriever
+    ) -> None:
         """Public API Alias for register_retriever."""
         self.register_retriever(selector, retriever)
-
 
     def estimate_token_cost(self, data: Any) -> int:
         """Expose token cost estimation API."""
         return self._estimator.estimate_token_cost(data)
 
-    def build_context(
-        self, task: Task, cache: Optional[ContextCache] = None
-    ) -> AgentContext:
+    def build_context(self, task: Task, cache: Optional[ContextCache] = None) -> AgentContext:
         """
         Build focused AgentContext payload executing 3-stage pipeline:
         1. Retrieval (via BaseRetriever providers + ContextCache)
@@ -405,11 +415,7 @@ class ContextEngine:
             strategy=policy.budget_strategy,
         )
 
-        project_id = (
-            task.payload.get("project_id")
-            if task.payload
-            else "default_project"
-        )
+        project_id = task.payload.get("project_id") if task.payload else "default_project"
 
         return AgentContext(
             task_id=task.task_id,
@@ -424,7 +430,6 @@ class ContextEngine:
     def assemble_context(self, task: Task, cache: Optional[ContextCache] = None) -> AgentContext:
         """Public API Alias for build_context."""
         return self.build_context(task, cache=cache)
-
 
     def _apply_budget(
         self,
@@ -459,7 +464,7 @@ class ContextEngine:
 
             elif strategy == BudgetStrategy.TRUNCATE:
                 # Truncate content dictionary
-                excess = current_cost - max_budget
+                current_cost - max_budget
                 item_count = len(lowest_prio_sec.content)
                 if item_count > 1:
                     # Drop half of the dictionary items in the section
@@ -467,7 +472,7 @@ class ContextEngine:
                     truncated_content = {k: lowest_prio_sec.content[k] for k in keys_to_keep}
                     new_sec_cost = self._estimator.estimate_token_cost(truncated_content)
 
-                    current_cost -= (lowest_prio_sec.estimated_token_cost - new_sec_cost)
+                    current_cost -= lowest_prio_sec.estimated_token_cost - new_sec_cost
                     kept_sections[-1] = ContextSection(
                         section_type=lowest_prio_sec.section_type,
                         title=f"{lowest_prio_sec.title} (Truncated)",
@@ -487,4 +492,3 @@ class ContextEngine:
         # Re-sort back into priority order
         final_sections = sorted(kept_sections, key=lambda s: s.priority)
         return final_sections, current_cost, is_truncated
-

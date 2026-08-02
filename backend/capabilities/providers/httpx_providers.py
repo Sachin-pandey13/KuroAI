@@ -1,9 +1,12 @@
-import time
 import os
+import time
+from typing import List, Optional
+
 import httpx
-from typing import List, Dict, Any
-from backend.contracts.capability import ToolRequest, ToolResponse, CapabilityType
+
 from backend.capabilities.providers.base_provider import BaseProvider
+from backend.contracts.capability import CapabilityType, ToolRequest, ToolResponse
+
 
 class LocalLlamaProvider(BaseProvider):
     """
@@ -11,8 +14,10 @@ class LocalLlamaProvider(BaseProvider):
     Uses raw httpx since the REST API is simple and SDKs add little value.
     """
 
-    def __init__(self, endpoint_url: str = None):
-        self._endpoint = endpoint_url or os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434/api/generate")
+    def __init__(self, endpoint_url: Optional[str] = None):
+        self._endpoint = endpoint_url or os.getenv(
+            "OLLAMA_ENDPOINT", "http://localhost:11434/api/generate"
+        )
 
     @property
     def provider_name(self) -> str:
@@ -25,24 +30,24 @@ class LocalLlamaProvider(BaseProvider):
     def execute(self, request: ToolRequest) -> ToolResponse:
         start_time = time.time()
         model = request.preferred_model or "llama3"
-        
+
         try:
             if request.capability_type != CapabilityType.GENERATE_TEXT:
-                raise ValueError(f"Capability {request.capability_type} not supported by LocalLlamaProvider")
+                raise ValueError(
+                    f"Capability {request.capability_type} not supported by LocalLlamaProvider"
+                )
 
             prompt = request.parameters.get("prompt", "")
             if not prompt and "messages" in request.parameters:
                 messages = request.parameters["messages"]
-                prompt = "\n".join([f'{m.get("role", "user")}: {m.get("content", "")}' for m in messages])
+                prompt = "\n".join(
+                    [f'{m.get("role", "user")}: {m.get("content", "")}' for m in messages]
+                )
 
-            payload = {
-                "model": model,
-                "prompt": prompt,
-                "stream": False
-            }
+            payload = {"model": model, "prompt": prompt, "stream": False}
 
             with httpx.Client(timeout=60.0) as client:
-                response = client.post(self._endpoint, json=payload)
+                response = client.post(self._endpoint or "", json=payload)
                 response.raise_for_status()
                 data = response.json()
 
@@ -68,7 +73,7 @@ class LocalLlamaProvider(BaseProvider):
                 provider_name=self.provider_name,
                 model_name=model,
                 error_message=str(e),
-                execution_time_ms=(end_time - start_time) * 1000
+                execution_time_ms=(end_time - start_time) * 1000,
             )
 
     def health_check(self, live: bool = False) -> bool:
@@ -77,7 +82,7 @@ class LocalLlamaProvider(BaseProvider):
         try:
             with httpx.Client(timeout=2.0) as client:
                 # Ollama root endpoint
-                base = self._endpoint.replace("/api/generate", "")
+                base = (self._endpoint or "").replace("/api/generate", "")
                 r = client.get(base)
                 return r.status_code == 200
         except Exception:
@@ -89,7 +94,8 @@ class ComfyUIProvider(BaseProvider):
     Thin adapter for ComfyUI.
     Expects a pre-built workflow JSON in request.parameters["workflow"].
     """
-    def __init__(self, endpoint_url: str = None):
+
+    def __init__(self, endpoint_url: Optional[str] = None):
         self._endpoint = endpoint_url or os.getenv("COMFYUI_ENDPOINT", "http://127.0.0.1:8188")
 
     @property
@@ -103,10 +109,12 @@ class ComfyUIProvider(BaseProvider):
     def execute(self, request: ToolRequest) -> ToolResponse:
         start_time = time.time()
         model = "comfy-workflow"
-        
+
         try:
             if request.capability_type != CapabilityType.GENERATE_IMAGE:
-                raise ValueError(f"Capability {request.capability_type} not supported by ComfyUIProvider")
+                raise ValueError(
+                    f"Capability {request.capability_type} not supported by ComfyUIProvider"
+                )
 
             workflow = request.parameters.get("workflow")
             if not workflow:
@@ -122,12 +130,12 @@ class ComfyUIProvider(BaseProvider):
 
             end_time = time.time()
             # In a real sync adapter, we'd poll or use websockets for completion.
-            # For this thin adapter, we return the prompt_id in output_data. 
+            # For this thin adapter, we return the prompt_id in output_data.
             # A higher level executor handles async polling if needed, or we do basic polling here.
             # To keep it completely stateless and thin, returning the prompt_id is best,
             # or doing a simple synchronous block if the architecture demands it.
             # We'll return the prompt_id so the orchestrator can track it.
-            
+
             return ToolResponse(
                 request_id=request.request_id,
                 success=True,
@@ -147,7 +155,7 @@ class ComfyUIProvider(BaseProvider):
                 provider_name=self.provider_name,
                 model_name=model,
                 error_message=str(e),
-                execution_time_ms=(end_time - start_time) * 1000
+                execution_time_ms=(end_time - start_time) * 1000,
             )
 
     def health_check(self, live: bool = False) -> bool:
@@ -165,7 +173,8 @@ class Automatic1111Provider(BaseProvider):
     """
     Thin adapter for Automatic1111/WebUI REST API.
     """
-    def __init__(self, endpoint_url: str = None):
+
+    def __init__(self, endpoint_url: Optional[str] = None):
         self._endpoint = endpoint_url or os.getenv("SD_WEBUI_ENDPOINT", "http://127.0.0.1:7860")
 
     @property
@@ -179,10 +188,12 @@ class Automatic1111Provider(BaseProvider):
     def execute(self, request: ToolRequest) -> ToolResponse:
         start_time = time.time()
         model = request.preferred_model or "sdxl"
-        
+
         try:
             if request.capability_type != CapabilityType.GENERATE_IMAGE:
-                raise ValueError(f"Capability {request.capability_type} not supported by Automatic1111Provider")
+                raise ValueError(
+                    f"Capability {request.capability_type} not supported by Automatic1111Provider"
+                )
 
             prompt = request.parameters.get("prompt")
             if not prompt:
@@ -195,7 +206,7 @@ class Automatic1111Provider(BaseProvider):
                 "width": request.parameters.get("width", 1024),
                 "height": request.parameters.get("height", 1024),
                 "send_images": True,
-                "save_images": False
+                "save_images": False,
             }
 
             with httpx.Client(timeout=120.0) as client:
@@ -205,7 +216,7 @@ class Automatic1111Provider(BaseProvider):
 
             end_time = time.time()
             images = data.get("images", [])
-            
+
             return ToolResponse(
                 request_id=request.request_id,
                 success=True,
@@ -225,7 +236,7 @@ class Automatic1111Provider(BaseProvider):
                 provider_name=self.provider_name,
                 model_name=model,
                 error_message=str(e),
-                execution_time_ms=(end_time - start_time) * 1000
+                execution_time_ms=(end_time - start_time) * 1000,
             )
 
     def health_check(self, live: bool = False) -> bool:

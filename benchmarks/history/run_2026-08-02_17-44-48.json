@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-08-02_17-44-48",
+  "results": [
+    {
+      "benchmark": "DependencyGraph",
+      "nodes": 5000,
+      "edges": 10000,
+      "build_ms": 130407.0,
+      "cycle_detect_ms": 15.0,
+      "bfs_ms": 0.0,
+      "peak_memory_mb": 5.98,
+      "gc_collections": [
+        -14,
+        6,
+        -2
+      ]
+    },
+    {
+      "benchmark": "ContextEngine",
+      "artifacts_in_registry": 1000,
+      "assembly_ms": 0.0,
+      "token_cost_estimate": 0,
+      "peak_memory_mb": 4.06,
+      "gc_collections": [
+        -14,
+        6,
+        -2
+      ]
+    },
+    {
+      "benchmark": "TaskScheduler",
+      "tasks_scheduled": 1000,
+      "dispatch_ms": 16.0,
+      "scheduled_plan_len": 0,
+      "peak_memory_mb": 1.48,
+      "gc_collections": [
+        -14,
+        6,
+        -2
+      ]
+    }
+  ]
+}

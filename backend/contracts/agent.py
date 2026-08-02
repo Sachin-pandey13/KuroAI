@@ -1,8 +1,10 @@
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
 from backend.contracts.artifact import Artifact
-from backend.contracts.event import Event
 from backend.contracts.decision_trace import DecisionTrace
+from backend.contracts.event import Event
 
 
 class AgentResult(BaseModel):
@@ -10,6 +12,7 @@ class AgentResult(BaseModel):
     Standardized return payload for every agent execution.
     Carries produced artifacts, state updates, decision trace, and telemetry.
     """
+
     task_id: str
     agent_id: str
     agent_type: str = "UNKNOWN"
@@ -27,6 +30,7 @@ class BatchResult(BaseModel):
     """
     Aggregate result of a run_batch() call, carrying metrics alongside results.
     """
+
     successful: List[AgentResult] = Field(default_factory=list)
     failed: List[AgentResult] = Field(default_factory=list)
     total_tasks: int = 0

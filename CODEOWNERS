@@ -1,0 +1,17 @@
+# KuroAI Code Ownership
+
+* @Sachin-pandey13
+
+# Architectural layers
+/backend/contracts/ @Sachin-pandey13
+/backend/engine/ @Sachin-pandey13
+/backend/agents/ @Sachin-pandey13
+/backend/inference/ @Sachin-pandey13
+/backend/resilience/ @Sachin-pandey13
+/backend/security/ @Sachin-pandey13
+/backend/telemetry/ @Sachin-pandey13
+
+# Infrastructure
+/.github/ @Sachin-pandey13
+/Dockerfile @Sachin-pandey13
+/docker-compose*.yml @Sachin-pandey13

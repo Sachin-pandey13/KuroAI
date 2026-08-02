@@ -3,7 +3,7 @@ Secret & Credential Redaction Filter.
 """
 
 import re
-from typing import List, Pattern
+from typing import Any, Dict, List, Pattern
 
 
 class SecretRedactor:
@@ -12,8 +12,8 @@ class SecretRedactor:
     """
 
     PATTERNS: List[Pattern] = [
-        re.compile(r"ghp_[A-Za-z0-9_]{36}"),                # GitHub PAT
-        re.compile(r"sk-[A-Za-z0-9_-]{32,}"),                # OpenAI API Key
+        re.compile(r"ghp_[A-Za-z0-9_]{36}"),  # GitHub PAT
+        re.compile(r"sk-[A-Za-z0-9_-]{32,}"),  # OpenAI API Key
         re.compile(r"Bearer\s+[A-Za-z0-9\._-]{20,}", re.I),  # JWT Bearer Token
         re.compile(r"password\s*=\s*['\"][^'\"]+['\"]", re.I),
     ]
@@ -31,16 +31,18 @@ class SecretRedactor:
         return result
 
     @classmethod
-    def redact_dict(cls, data: dict) -> dict:
+    def redact_dict(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Recursively redact string values inside a dictionary."""
-        redacted = {}
+        redacted: Dict[str, Any] = {}
         for k, v in data.items():
             if isinstance(v, str):
                 redacted[k] = cls.redact_text(v)
             elif isinstance(v, dict):
                 redacted[k] = cls.redact_dict(v)
             elif isinstance(v, list):
-                redacted[k] = [cls.redact_text(item) if isinstance(item, str) else item for item in v]
+                redacted[k] = [
+                    cls.redact_text(item) if isinstance(item, str) else item for item in v
+                ]
             else:
                 redacted[k] = v
         return redacted

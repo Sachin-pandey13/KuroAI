@@ -3,22 +3,22 @@ Security unit tests — Prompt Safety Validation, Path Traversal, Redaction, Rat
 """
 
 import os
-import time
+
 import pytest
+
 from backend.security import (
-    PromptSafetyValidator,
     InputValidationError,
-    sanitize_filename,
-    assert_safe_path,
-    SecretRedactor,
-    SecretManager,
-    TokenBucketRateLimiter,
-    SlidingWindowRateLimiter,
+    PromptSafetyValidator,
     RateLimitExceededError,
+    SecretRedactor,
+    SlidingWindowRateLimiter,
+    TokenBucketRateLimiter,
+    assert_safe_path,
+    sanitize_filename,
 )
 
-
 # ─── Prompt Safety Validation ─────────────────────────────────────────────────
+
 
 class TestPromptSafetyValidator:
     def setup_method(self):
@@ -51,6 +51,7 @@ class TestPromptSafetyValidator:
 
 # ─── Filename & Path Safety ────────────────────────────────────────────────────
 
+
 class TestPathSafety:
     def test_safe_filename(self):
         result = sanitize_filename("my_document.txt")
@@ -72,6 +73,7 @@ class TestPathSafety:
 
 
 # ─── Secret Redaction ─────────────────────────────────────────────────────────
+
 
 class TestSecretRedactor:
     def test_redacts_github_pat(self):
@@ -98,6 +100,7 @@ class TestSecretRedactor:
 
 
 # ─── Rate Limiting ────────────────────────────────────────────────────────────
+
 
 class TestTokenBucketRateLimiter:
     def test_allows_within_capacity(self):

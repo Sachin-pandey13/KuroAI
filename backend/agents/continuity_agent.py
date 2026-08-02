@@ -1,22 +1,23 @@
 import os
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from jinja2 import Environment, FileSystemLoader
 
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext, ContextSectionType
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-from backend.agents.tool_executor import BaseToolExecutor
 from backend.agents.output_parser import OutputParser
-from backend.contracts.review import ContinuityReport, ReviewIssue, ReviewSeverity, ReviewCategory
-
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
+from backend.contracts.context import AgentContext, ContextSectionType
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
+from backend.contracts.review import ContinuityReport, ReviewCategory, ReviewIssue, ReviewSeverity
 
 # =====================================================================
 # Plugin Continuity Rule Pipeline Interface & Concrete Rules
 # =====================================================================
+
 
 class ContinuityRule(ABC):
     """Abstract Base Class for modular continuity rules."""
@@ -27,7 +28,9 @@ class ContinuityRule(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self, characters: List[Dict[str, Any]], scenes: List[Dict[str, Any]]) -> List[ReviewIssue]:
+    def evaluate(
+        self, characters: List[Dict[str, Any]], scenes: List[Dict[str, Any]]
+    ) -> List[ReviewIssue]:
         """Evaluates narrative data against this specific rule and returns identified issues."""
         pass
 
@@ -39,18 +42,25 @@ class CharacterAppearanceRule(ContinuityRule):
     def rule_id(self) -> str:
         return "character_appearance_rule"
 
-    def evaluate(self, characters: List[Dict[str, Any]], scenes: List[Dict[str, Any]]) -> List[ReviewIssue]:
+    def evaluate(
+        self, characters: List[Dict[str, Any]], scenes: List[Dict[str, Any]]
+    ) -> List[ReviewIssue]:
         issues = []
         for char in characters:
             name = char.get("name", "")
             app = char.get("appearance", {})
             hair = app.get("hair", "").lower()
-            
+
             # Simple deterministic rule check: if hair is described as blonde in profile but panel says dark
             for scene in scenes:
                 for panel in scene.get("panels", []):
                     action = panel.get("action", "").lower()
-                    if name.lower() in action and hair and "dark hair" in action and "blonde" in hair:
+                    if (
+                        name.lower() in action
+                        and hair
+                        and "dark hair" in action
+                        and "blonde" in hair
+                    ):
                         issues.append(
                             ReviewIssue(
                                 issue_id=f"app_{char.get('character_id', 'unk')}_{panel.get('panel_number', 0)}",
@@ -70,7 +80,9 @@ class RelationshipRule(ContinuityRule):
     def rule_id(self) -> str:
         return "relationship_rule"
 
-    def evaluate(self, characters: List[Dict[str, Any]], scenes: List[Dict[str, Any]]) -> List[ReviewIssue]:
+    def evaluate(
+        self, characters: List[Dict[str, Any]], scenes: List[Dict[str, Any]]
+    ) -> List[ReviewIssue]:
         issues = []
         # Checks if sworn enemies are described as best friends without arc justification
         char_map = {c.get("character_id"): c for c in characters}
@@ -83,7 +95,10 @@ class RelationshipRule(ContinuityRule):
                     for scene in scenes:
                         for panel in scene.get("panels", []):
                             action = panel.get("action", "").lower()
-                            if char.get("name", "").lower() in action and target.get("name", "").lower() in action:
+                            if (
+                                char.get("name", "").lower() in action
+                                and target.get("name", "").lower() in action
+                            ):
                                 if "best friend" in action or "hugs warmly" in action:
                                     issues.append(
                                         ReviewIssue(
@@ -101,6 +116,7 @@ class RelationshipRule(ContinuityRule):
 # ContinuityAgent Implementation
 # =====================================================================
 
+
 class ContinuityAgent(BaseAgent):
     """
     Validates narrative continuity across multiple scenes and character profiles.
@@ -108,10 +124,14 @@ class ContinuityAgent(BaseAgent):
     """
 
     def __init__(self, rules: Optional[List[ContinuityRule]] = None):
-        self.rules: List[ContinuityRule] = rules if rules is not None else [
-            CharacterAppearanceRule(),
-            RelationshipRule(),
-        ]
+        self.rules: List[ContinuityRule] = (
+            rules
+            if rules is not None
+            else [
+                CharacterAppearanceRule(),
+                RelationshipRule(),
+            ]
+        )
 
     @property
     def agent_id(self) -> str:
@@ -131,7 +151,10 @@ class ContinuityAgent(BaseAgent):
         scenes = []
 
         for sec in context.sections:
-            if sec.section_type in (ContextSectionType.ARTIFACT, ContextSectionType.UPSTREAM_ARTIFACT) and isinstance(sec.content, dict):
+            if sec.section_type in (
+                ContextSectionType.ARTIFACT,
+                ContextSectionType.UPSTREAM_ARTIFACT,
+            ) and isinstance(sec.content, dict):
                 art_type = sec.content.get("artifact_type")
                 if art_type == ArtifactType.CHARACTER_PROFILE.value:
                     characters.append(sec.content.get("data", {}))
@@ -173,7 +196,9 @@ class ContinuityAgent(BaseAgent):
             warnings = sum(1 for i in rule_issues if i.severity == ReviewSeverity.WARNING)
             score = max(0.0, 100.0 - (errors * 25.0 + warnings * 10.0))
 
-        passed = score >= 80.0 and not any(i.severity == ReviewSeverity.ERROR for i in combined_issues)
+        passed = score >= 80.0 and not any(
+            i.severity == ReviewSeverity.ERROR for i in combined_issues
+        )
 
         final_report = ContinuityReport(
             project_id=project_id,

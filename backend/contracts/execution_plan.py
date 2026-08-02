@@ -1,6 +1,7 @@
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
 import uuid
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskSpec(BaseModel):
@@ -8,6 +9,7 @@ class TaskSpec(BaseModel):
     Planning-level representation of a task to be executed.
     Decoupled from runtime Task concept — converted into Task by TaskScheduler.
     """
+
     spec_id: str = Field(default_factory=lambda: f"task_spec_{uuid.uuid4().hex[:8]}")
     target_agent_type: str
     payload: Dict[str, Any] = Field(default_factory=dict)
@@ -23,6 +25,7 @@ class ExecutionPlan(BaseModel):
     First-class immutable planning artifact produced by DirectorAgent.
     Defines the full task breakdown and DAG dependency structure for a user goal.
     """
+
     plan_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     goal_id: str
     user_prompt: str
@@ -35,6 +38,7 @@ class ExecutionPlan(BaseModel):
 
 class ExecutionPlanValidationError(Exception):
     """Raised when an ExecutionPlan fails structural or graph validation."""
+
     pass
 
 

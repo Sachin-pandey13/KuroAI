@@ -2,19 +2,15 @@
 Unit tests for backend/telemetry module.
 """
 
-import pytest
 from backend.telemetry import (
-    Span,
-    Tracer,
     Counter,
+    EventAuditRegistry,
     Gauge,
     Histogram,
-    Timer,
+    Span,
     TelemetryManager,
-    PrometheusExporter,
-    JSONExporter,
-    OpenTelemetryExporter,
-    EventAuditRegistry,
+    Timer,
+    Tracer,
 )
 
 

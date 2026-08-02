@@ -1,8 +1,9 @@
-from enum import Enum
-from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field
-from datetime import datetime
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
 
 
 class EventType(str, Enum):
@@ -28,6 +29,7 @@ class Event(BaseModel):
     """
     Abstract Event payload emitted across the Event Bus and Project State Engine.
     """
+
     event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     event_type: EventType
     project_id: str = "default_project"
@@ -41,6 +43,7 @@ class EventLog(BaseModel):
     """
     Audit and tracking record for event delivery on the EventBus.
     """
+
     log_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     event: Event
     delivered_to: int

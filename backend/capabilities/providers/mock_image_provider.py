@@ -1,12 +1,13 @@
 import time
 from typing import List
+
+from backend.capabilities.providers.base_provider import BaseProvider
 from backend.contracts.capability import (
-    CapabilityType,
     CapabilityDescriptor,
+    CapabilityType,
     ToolRequest,
     ToolResponse,
 )
-from backend.capabilities.providers.base_provider import BaseProvider
 
 
 class MockImageProvider(BaseProvider):
@@ -75,5 +76,5 @@ class MockImageProvider(BaseProvider):
             },
         )
 
-    def health_check(self) -> bool:
+    def health_check(self, live: bool = False) -> bool:
         return True

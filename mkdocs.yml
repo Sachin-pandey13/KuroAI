@@ -1,0 +1,70 @@
+site_name: KuroAI Platform Documentation
+site_description: Enterprise-Grade Generative AI Pipeline & Agent Runtime Engine
+site_author: Sachin Pandey
+site_url: https://sachin-pandey13.github.io/KuroAI/
+
+repo_name: Sachin-pandey13/KuroAI
+repo_url: https://github.com/Sachin-pandey13/KuroAI
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+
+nav:
+  - Overview: index.md
+  - Getting Started: getting-started.md
+  - Developer Guide: developer-guide.md
+  - Architecture & Versioning:
+      - Versioning Policy: versioning.md
+      - Architecture Specification: ARCHITECTURE_v1.md
+  - Extensibility Guides:
+      - Creating Agents: creating-agents.md
+      - Creating Providers: creating-providers.md
+      - Creating Contracts: creating-contracts.md
+      - Plugin Guide: plugin-guide.md
+  - Operations & Testing:
+      - Testing Guide: testing-guide.md
+      - Deployment: deployment.md

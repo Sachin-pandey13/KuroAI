@@ -3,8 +3,8 @@ Stress test for EventBus under high-concurrency event publication.
 """
 
 import threading
-import pytest
-from backend.contracts import EventType, Event
+
+from backend.contracts import Event, EventType
 from backend.engine import EventBus
 
 

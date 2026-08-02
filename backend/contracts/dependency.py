@@ -1,14 +1,16 @@
-from enum import Enum
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
+
 from backend.contracts.artifact import ArtifactState
 
 
 class EdgeType(str, Enum):
-    EXPLICIT = "EXPLICIT"    # Direct parent -> child generation link
-    IMPLICIT = "IMPLICIT"    # Context dependency
-    STYLE = "STYLE"          # Style guide / character blueprint constraint
+    EXPLICIT = "EXPLICIT"  # Direct parent -> child generation link
+    IMPLICIT = "IMPLICIT"  # Context dependency
+    STYLE = "STYLE"  # Style guide / character blueprint constraint
 
 
 class DependencyEdge(BaseModel):
@@ -18,6 +20,7 @@ class DependencyEdge(BaseModel):
     If Source changes, Target becomes STALE/INVALID.
     Supports optional weighting, confidence, and provenance metadata.
     """
+
     source_artifact_id: str
     target_artifact_id: str
     edge_type: EdgeType = EdgeType.EXPLICIT
@@ -33,6 +36,7 @@ class InvalidationRecord(BaseModel):
     Rich record explaining exact invalidation provenance (First Law).
     Answers: Why is this artifact stale? Who caused it? At what depth?
     """
+
     source_artifact_id: str
     affected_artifact_id: str
     reason: str
@@ -46,6 +50,7 @@ class DependencyNode(BaseModel):
     Node representation inside the Dependency Graph Subsystem.
     Owns upstream & downstream relationship links strictly within the graph.
     """
+
     artifact_id: str
     artifact_type: str
     state: ArtifactState = ArtifactState.ACTIVE

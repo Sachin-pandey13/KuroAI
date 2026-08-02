@@ -1,8 +1,10 @@
 import json
-from typing import Type, TypeVar, Optional
+from typing import Optional, Type, TypeVar
+
 from pydantic import BaseModel, ValidationError
 
 T = TypeVar("T", bound=BaseModel)
+
 
 class OutputParser:
     """
@@ -18,10 +20,10 @@ class OutputParser:
             cleaned = cleaned[7:]
         elif cleaned.startswith("```"):
             cleaned = cleaned[3:]
-        
+
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
-            
+
         return cleaned.strip()
 
     @classmethod
@@ -32,7 +34,7 @@ class OutputParser:
         """
         if not text:
             return None
-            
+
         cleaned_text = cls.strip_code_fences(text)
         try:
             return model_cls.model_validate_json(cleaned_text)

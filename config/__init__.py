@@ -2,9 +2,13 @@
 KuroAI Configuration Package.
 """
 
-from config.defaults import *
+from config.constants import PLATFORM_NAME, PLATFORM_VERSION
+from config.defaults import (
+    DEFAULT_CONTEXT_BUDGET,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_TASK_TIMEOUT_SECONDS,
+)
 from config.environment import settings
-from config.constants import *
 
 __all__ = [
     "settings",

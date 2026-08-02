@@ -2,8 +2,8 @@
 Generic token estimation utility.
 """
 
-from typing import Union, Dict, Any
 import json
+from typing import Any, Dict, Union
 
 
 def estimate_tokens(content: Union[str, Dict[str, Any], list]) -> int:

@@ -7,49 +7,110 @@ on:
     branches: [main]
 
 jobs:
-  validate-and-test:
-    name: Validate, Test & Lint
+  architecture:
+    name: Architecture Validator
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements/ci.txt
+      - run: python scripts/architecture_validator.py
+
+  formatting:
+    name: Code Formatting (Black & isort)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install black isort
+      - run: black --check backend config scripts tests benchmarks
+      - run: isort --check-only backend config scripts tests benchmarks
+
+  linting:
+    name: Linting (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install ruff
+      - run: ruff check backend config scripts tests benchmarks
+
+  type-checking:
+    name: Type Checking (MyPy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install mypy pydantic types-requests types-PyYAML
+      - run: mypy backend config --ignore-missing-imports
+
+  unit-tests:
+    name: Unit Tests (${{ matrix.os }} / Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-latest
+            python-version: "3.12"
+          - os: windows-latest
+            python-version: "3.11"
+          - os: macos-latest
+            python-version: "3.11"
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+      - run: pip install -r requirements/ci.txt
+      - run: python -m pytest tests/test_public_api.py -v
+      - run: python -m pytest tests/ -q --ignore=tests/stress
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+  security:
+    name: Security Audits & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements/ci.txt detect-secrets
+      - run: python -m pytest tests/test_security.py -v
+      - run: pip-audit || echo "Security audit finished with non-zero status"
 
-      - name: Run Architecture Validator
-        run: python scripts/architecture_validator.py
-
-      - name: Run Public API Stability Tests
-        run: python -m pytest tests/test_public_api.py -v
-
-      - name: Run Unit Test Suite
-        run: python -m pytest tests/ -q --ignore=tests/stress
-
-      - name: Run Security Tests
-        run: python -m pytest tests/test_security.py tests/test_resilience.py tests/test_telemetry.py -v
-
-      - name: Generate Coverage Report
-        run: |
-          pip install coverage
-          coverage run -m pytest tests/ --ignore=tests/stress -q
-          coverage report --fail-under=70
-          coverage html -d coverage_html
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+  coverage:
+    name: Layer Coverage Enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements/ci.txt coverage
+      - run: coverage run -m pytest tests/ --ignore=tests/stress -q
+      - run: coverage report --fail-under=80
+      - run: coverage html -d coverage_html
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage_html/

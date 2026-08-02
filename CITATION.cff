@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use KuroAI in your research or software platform, please cite it as below."
+authors:
+  - family-names: "Pandey"
+    given-names: "Sachin"
+title: "KuroAI: Enterprise Generative AI Pipeline & Agent Runtime Engine"
+version: 1.0.0-rc3
+date-released: 2025-08-02
+url: "https://github.com/Sachin-pandey13/KuroAI"

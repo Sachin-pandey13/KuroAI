@@ -8,13 +8,28 @@ venv/
 .env/
 .venv/
 
-# Jupyter
+# Jupyter & Notebooks
 .ipynb_checkpoints
 
 # Build / distribution
 build/
 dist/
 *.egg-info/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+coverage.xml
+coverage_html/
+htmlcov/
+
+# Documentation build
+site/
+
+# Benchmarks history output cache (keep history/ directory committed)
+benchmarks/*.json
+benchmarks/*.csv
+!benchmarks/history/
 
 # Logs
 *.log
@@ -23,7 +38,7 @@ dist/
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 

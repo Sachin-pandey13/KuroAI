@@ -2,7 +2,7 @@
 Generic error normalization utility.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 def normalize_error(error: Exception) -> Dict[str, Any]:

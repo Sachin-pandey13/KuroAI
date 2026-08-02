@@ -1,42 +1,37 @@
 import pytest
-import asyncio
-from typing import Dict, Any
 
-from backend.contracts.execution_plan import (
-    TaskSpec,
-    ExecutionPlan,
-    ExecutionPlanValidationError,
-    validate_execution_plan,
-)
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
-from backend.contracts.task import Task, TaskStatus, TaskPriority
-from backend.contracts.event import Event, EventType
-
-from backend.agents.director_agent import DirectorAgent
-from backend.agents.story_agent import StoryAgent
+from backend.agents.agent_registry import AgentRegistry
+from backend.agents.base_agent import BaseAgent
 from backend.agents.character_agent import CharacterAgent
 from backend.agents.creative_safety_agent import CreativeSafetyAgent
-from backend.agents.agent_registry import AgentRegistry, AgentAlreadyRegisteredError
+from backend.agents.director_agent import DirectorAgent
 from backend.agents.runtime import AgentRuntime
-from backend.agents.base_agent import BaseAgent
-from backend.contracts.agent import AgentResult
-
-from backend.engine.task_registry import TaskRegistry
-from backend.engine.dependency_graph import DependencyGraph
-from backend.engine.artifact_registry import ArtifactRegistry
-from backend.engine.version_graph import VersionGraph
-from backend.engine.scheduler import TaskScheduler
-from backend.engine.event_bus import EventBus
-from backend.capabilities.registry import CapabilityRegistry
-from backend.capabilities.providers.mock_text_provider import MockTextProvider
+from backend.agents.story_agent import StoryAgent
 from backend.capabilities.providers.mock_image_provider import MockImageProvider
+from backend.capabilities.providers.mock_text_provider import MockTextProvider
+from backend.capabilities.registry import CapabilityRegistry
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactType
 from backend.contracts.capability import CapabilityType
-
+from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
+from backend.contracts.execution_plan import (
+    ExecutionPlan,
+    ExecutionPlanValidationError,
+    TaskSpec,
+    validate_execution_plan,
+)
+from backend.contracts.task import Task
+from backend.engine.artifact_registry import ArtifactRegistry
+from backend.engine.dependency_graph import DependencyGraph
+from backend.engine.event_bus import EventBus
+from backend.engine.scheduler import TaskScheduler
+from backend.engine.task_registry import TaskRegistry
+from backend.engine.version_graph import VersionGraph
 
 # ----------------------------------------------------------------------
 # 1. Contract & Immutability & Validation Tests
 # ----------------------------------------------------------------------
+
 
 def test_task_spec_and_execution_plan_contracts():
     spec1 = TaskSpec(
@@ -128,6 +123,7 @@ def test_validate_execution_plan_cycle_detection():
 # 2. DirectorAgent Unit & Execution Tests
 # ----------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_director_agent_execution():
     agent = DirectorAgent()
@@ -172,6 +168,7 @@ async def test_director_agent_execution():
 # 3. TaskScheduler Integration Tests (load_execution_plan)
 # ----------------------------------------------------------------------
 
+
 def test_task_scheduler_load_execution_plan():
     task_reg = TaskRegistry()
     dep_graph = DependencyGraph()
@@ -183,9 +180,16 @@ def test_task_scheduler_load_execution_plan():
     agent_reg.register_agent(CreativeSafetyAgent())
 
     spec1 = TaskSpec(spec_id="spec_story_1", target_agent_type="STORY", priority=10)
-    spec2 = TaskSpec(spec_id="spec_char_1", target_agent_type="CHARACTER", dependencies=["spec_story_1"], priority=8)
+    spec2 = TaskSpec(
+        spec_id="spec_char_1",
+        target_agent_type="CHARACTER",
+        dependencies=["spec_story_1"],
+        priority=8,
+    )
 
-    plan = ExecutionPlan(goal_id="goal_cyber", user_prompt="Cyberpunk story", task_specs=[spec1, spec2])
+    plan = ExecutionPlan(
+        goal_id="goal_cyber", user_prompt="Cyberpunk story", task_specs=[spec1, spec2]
+    )
     artifact = Artifact(
         project_id="proj_1",
         artifact_type=ArtifactType.EXECUTION_PLAN,
@@ -216,18 +220,28 @@ def test_task_scheduler_load_execution_plan():
 # 4. End-to-End Goal -> DirectorAgent -> ExecutionPlan -> Runtime Pipeline
 # ----------------------------------------------------------------------
 
-from backend.agents.image_agent import ImageAgent
 
 class DummyAgent(BaseAgent):
     def __init__(self, a_id: str, a_type: str):
         self._a_id = a_id
         self._a_type = a_type
+
     @property
-    def agent_id(self) -> str: return self._a_id
+    def agent_id(self) -> str:
+        return self._a_id
+
     @property
-    def agent_type(self) -> str: return self._a_type
+    def agent_type(self) -> str:
+        return self._a_type
+
     async def execute(self, context, tool_executor=None):
-        return AgentResult(task_id=context.task_id, agent_id=self.agent_id, agent_type=self.agent_type, success=True)
+        return AgentResult(
+            task_id=context.task_id,
+            agent_id=self.agent_id,
+            agent_type=self.agent_type,
+            success=True,
+        )
+
 
 @pytest.mark.asyncio
 async def test_end_to_end_director_pipeline():

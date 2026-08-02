@@ -12,20 +12,21 @@ Usage:
     # One success closes it again; one failure re-opens it.
 """
 
-import time
 import threading
+import time
 from enum import Enum
-from typing import Optional, Callable, Any
+from typing import Any, Callable, Optional
 
 
 class CircuitState(str, Enum):
-    CLOSED = "CLOSED"          # Normal operation
-    OPEN = "OPEN"              # Blocking calls — failure threshold crossed
-    HALF_OPEN = "HALF_OPEN"   # Probe allowed — testing recovery
+    CLOSED = "CLOSED"  # Normal operation
+    OPEN = "OPEN"  # Blocking calls — failure threshold crossed
+    HALF_OPEN = "HALF_OPEN"  # Probe allowed — testing recovery
 
 
 class CircuitOpenError(Exception):
     """Raised when a call is attempted while the circuit is OPEN."""
+
     pass
 
 
@@ -62,7 +63,10 @@ class CircuitBreaker:
     def _evaluate_state(self) -> CircuitState:
         """Transition OPEN → HALF_OPEN if recovery_timeout has elapsed."""
         if self._state == CircuitState.OPEN:
-            if self._last_failure_time and (time.monotonic() - self._last_failure_time) >= self.recovery_timeout:
+            if (
+                self._last_failure_time
+                and (time.monotonic() - self._last_failure_time) >= self.recovery_timeout
+            ):
                 self._state = CircuitState.HALF_OPEN
         return self._state
 
@@ -83,7 +87,7 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as exc:
+        except Exception:
             self._on_failure()
             raise
 
@@ -108,6 +112,7 @@ class CircuitBreaker:
 
     def context(self, operation_name: str = ""):
         """Context manager interface for circuit breaker."""
+
         class _CircuitContext:
             def __init__(self_ctx):
                 pass
@@ -116,9 +121,7 @@ class CircuitBreaker:
                 with self._lock:
                     state = self._evaluate_state()
                     if state == CircuitState.OPEN:
-                        raise CircuitOpenError(
-                            f"Circuit '{self.name}' is OPEN. Calls blocked."
-                        )
+                        raise CircuitOpenError(f"Circuit '{self.name}' is OPEN. Calls blocked.")
                 return self_ctx
 
             def __exit__(self_ctx, exc_type, exc_val, exc_tb):

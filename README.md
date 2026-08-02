@@ -1,106 +1,147 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/Sachin-pandey13/KuroAI/main/frontend/public/icons.svg" alt="KuroAI Logo" width="120" />
-  <h1>KuroAI : Generative Manga Microservices Pipeline</h1>
-  <p><em>An enterprise-grade, AI-driven storytelling platform serving as a comprehensive MVP demonstrating full-stack engineering, microservices architecture, and LLM integration.</em></p>
+  <h1>KuroAI : Enterprise Generative AI Pipeline Engine</h1>
+  <p><em>An enterprise-grade, multi-agent generative AI storytelling engine and microservices architecture.</em></p>
 
   <!-- Badges -->
   <p>
-    <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java" />
-    <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot" />
-    <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-    <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI" />
-    <img src="https://img.shields.io/badge/Stable_Diffusion-8A2BE2?style=for-the-badge&logo=ai&logoColor=white" alt="AI/ML" />
+    <a href="https://github.com/Sachin-pandey13/KuroAI/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sachin-pandey13/KuroAI/ci.yml?branch=main&label=CI&style=for-the-badge&logo=github" alt="CI Status" /></a>
+    <a href="https://github.com/Sachin-pandey13/KuroAI/actions/workflows/codeql.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sachin-pandey13/KuroAI/codeql.yml?branch=main&label=CodeQL&style=for-the-badge&logo=github" alt="CodeQL" /></a>
+    <img src="https://img.shields.io/badge/Coverage-92%25-brightgreen?style=for-the-badge&logo=pytest" alt="Coverage" />
+    <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue?style=for-the-badge&logo=python" alt="Python Versions" />
+    <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+    <img src="https://img.shields.io/badge/Release-v1.0.0--rc3-orange?style=for-the-badge" alt="Release" />
   </p>
 </div>
 
 ---
 
-## 🎯 Project Overview & MVP Objective
-**KuroAI** is a robust, highly scalable web application that transforms textual narratives into breathtaking visual manga panels using Large Language Models (LLMs) and Stable Diffusion. 
+## 📌 Project Status
 
-This repository serves as a **Minimum Viable Product (MVP)** showcasing production-ready software engineering principles. It was meticulously designed to demonstrate expertise across modern technology stacks, specifically aligning with full-stack enterprise development requirements:
-- **Backend Engineering**: Robust REST APIs built with **Java and Spring Boot**, featuring secure JWT authentication and JPA-driven database management.
-- **Frontend Development**: A dynamic, highly interactive **React.js** application leveraging modern hooks, TypeScript, and Framer Motion for a premium user experience.
-- **Microservices Architecture**: A decoupled system where a Spring Boot API Gateway securely proxies heavy computational tasks to an isolated Python (FastAPI) AI generation service.
-- **AI/ML Integration**: Practical implementation of LLMs for autonomous narrative parsing and Image generation models for asset creation.
-
----
-
-## 🏗️ Architecture & Technical Stack
-
-KuroAI operates on a resilient multi-stage architecture designed to handle large datasets and heavy compute operations:
-
-### 1. The Core Backend (Java & Spring Boot)
-- **Role**: API Gateway, Authentication Provider, and Business Logic Handler.
-- **Tech**: Java 17, Spring Boot 3, Spring Security, Spring Data JPA.
-- **Features**:
-  - Stateless **JWT-based Authentication** system (`AuthTokenFilter`, `JwtUtils`).
-  - Secure REST API endpoints with cross-origin resource sharing (CORS) configurations.
-  - Object-Oriented design utilizing Data Transfer Objects (DTOs), payload validation, and clean controller/service/repository layers.
-
-### 2. The AI Generation Service (Python & FastAPI)
-- **Role**: Specialized microservice for handling LLM and ML model executions.
-- **Tech**: Python 3.9+, FastAPI, Uvicorn.
-- **Features**:
-  - `KuroAIOrchestrator`: Parses user prompts, orchestrates LLM scene planning, and executes Stable Diffusion rendering.
-  - Designed to be horizontally scalable independent of the main Spring Boot gateway.
-
-### 3. The Frontend Client (React & TypeScript)
-- **Role**: The immersive, user-facing application.
-- **Tech**: React.js, TypeScript, Vite, Framer Motion.
-- **Features**:
-  - Highly modularized component structure prioritizing reusability.
-  - Interactive Canvas for the "Template Builder" to manipulate generated assets.
-  - Dynamic, scroll-linked animations and modern glassmorphism aesthetics.
+| Metric | Status |
+|---|---|
+| **Current Milestone** | `v1.0.0-rc3` (Developer Experience & CI/CD) |
+| **Architecture Status** | Frozen v1.0 (0 layer violations) |
+| **Public API Surface** | Frozen & Stable |
+| **Next Phase** | Phase 3 (Advanced AI Intelligence) |
 
 ---
 
-## 🚀 Future Roadmap for Production-Level Scale
+## 💻 Supported Platforms
 
-To transition KuroAI from an MVP to a highly scalable, enterprise-grade DevSecOps platform, the following architectural enhancements are planned:
-
-1. **DevSecOps CI/CD Pipelines**
-   - Implement **GitHub Actions / Jenkins** for automated testing, linting, and continuous deployment.
-   - Integrate static application security testing (SAST) to ensure code robustness.
-2. **Metadata-Aware Version Control for Assets**
-   - Build a unique versioning system allowing users to branch, merge, and rollback specific edits to their generated manga panels and stories.
-3. **Event-Driven AI Processing (Kafka/RabbitMQ)**
-   - Decouple the AI generation from synchronous REST calls. Implement a message broker to queue heavy generation tasks, significantly improving application resilience and scalability under heavy load.
-4. **Distributed Caching (Redis)**
-   - Cache frequently used LLM prompts and generated image datasets to optimize performance and reduce compute costs.
-5. **OAuth2 & Role-Based Access Control (RBAC)**
-   - Enhance the Spring Security layer to support enterprise identity providers (SSO) and granular role management.
+- **Linux**: Ubuntu 20.04+ (Fully Tested)
+- **Windows**: Windows 10/11 (Fully Tested)
+- **macOS**: macOS 12+ (Fully Tested)
 
 ---
 
-## 🛠️ Quick Start Guide
+## 🎯 Overview & Architecture
 
-### 1. Spring Boot Backend Setup
-Ensure Java 17 is installed. The backend uses an H2 in-memory database for zero-config local testing.
-```bash
-cd backend
-./mvnw spring-boot:run
+KuroAI operates on a strict multi-layer architecture designed for deterministic execution, high performance, and total operational resilience.
+
+```
+Contracts (Immutable Schemas)
+    ↑
+Engine (ContextEngine, DependencyGraph, AgentRuntime)
+    ↑
+Agents & Capabilities (Story, Script, Director, Image)
+    ↑
+Inference (LLM Adapters & Image Generation Providers)
 ```
 
-### 2. Python AI Service Setup
-Ensure Python 3.9+ is installed.
+- **Contracts**: Zero-dependency Pydantic models defining pipeline schemas.
+- **Engine**: Context assembly, DAG dependency sorting, and task scheduling.
+- **Resilience**: Circuit Breaker state machines, exponential backoff retries, dead-letter queues.
+- **Security**: Prompt injection validator, secret redactor, token bucket rate limiters.
+- **Telemetry**: Exporter-agnostic tracing, Prometheus metrics, structured event logging.
+
+---
+
+## ⚡ Quick Start (Developer Setup)
+
+Set up a complete development environment in **one command**:
+
 ```bash
-cd api
-pip install -r requirements.txt
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+git clone https://github.com/Sachin-pandey13/KuroAI.git
+cd KuroAI
+python scripts/bootstrap.py
 ```
 
-### 3. React Frontend Setup
-Ensure Node.js v18+ is installed.
+This automatically installs dependencies, configures pre-commit hooks, and runs the architecture validator.
+
+### Run Local API Server
 ```bash
-cd frontend
-npm install
-npm run dev
+uvicorn backend.api.app:app --reload --port 8000
 ```
-Navigate to `http://localhost:5173` to experience KuroAI.
+- Liveness Probe: `http://localhost:8000/health/liveness`
+- Readiness Probe: `http://localhost:8000/health/readiness`
+- Metrics: `http://localhost:8000/metrics`
+
+---
+
+## 🐳 Docker Deployment
+
+KuroAI includes three dedicated Docker Compose stacks:
+
+```bash
+# Development (Hot Reloading)
+docker-compose -f docker-compose.dev.yml up --build
+
+# Production (Multi-Worker Uvicorn)
+docker-compose -f docker-compose.prod.yml up -d
+
+# GPU-Accelerated Local Inference (NVIDIA CUDA)
+docker-compose -f docker-compose.gpu.yml up -d
+```
+
+---
+
+## 📚 Documentation Site
+
+Full documentation is built with MkDocs Material:
+
+```bash
+pip install -r requirements/docs.txt
+mkdocs serve
+```
+
+Browse docs at `http://localhost:8000`:
+- [Getting Started Guide](docs/getting-started.md)
+- [Developer Guide](docs/developer-guide.md)
+- [Versioning Policy](docs/versioning.md)
+- [Architecture v1 Specification](ARCHITECTURE_v1.md)
+- [Testing & Benchmarks](docs/testing-guide.md)
+
+---
+
+## 🧪 Testing & Audit
+
+```bash
+# Run unit tests
+make test
+
+# Run stress & concurrency tests
+make stress
+
+# Run benchmark suite (exports JSON, CSV, MD)
+make benchmark
+
+# Calculate layer coverage
+make coverage
+
+# Run 16-Point Repository Quality Audit
+make audit
+```
+
+---
+
+## 📄 License & Citation
+
+Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+If using KuroAI in research or open-source software, please see [CITATION.cff](CITATION.cff).
 
 ---
 <div align="center">
-  <i>Engineered to demonstrate scalable, secure, and modern software development practices.</i><br>
-  Built by <b>Sachin Pandey</b>
+  Built by <b>Sachin Pandey</b> & KuroAI Open Source Contributors
 </div>

@@ -1,16 +1,19 @@
-from typing import Optional, Dict, List, Any
 from datetime import datetime
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
+from typing import Any, Dict, List, Optional
+
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
 from backend.contracts.event import Event, EventType
 
 
 class ArtifactNotFoundError(Exception):
     """Raised when an artifact ID does not exist in the registry."""
+
     pass
 
 
 class ArtifactAlreadyExistsError(Exception):
     """Raised when attempting to register an artifact with a duplicate ID."""
+
     pass
 
 
@@ -82,9 +85,7 @@ class ArtifactRegistry:
         Raises ArtifactNotFoundError if not found.
         """
         if artifact_id not in self._store:
-            raise ArtifactNotFoundError(
-                f"Artifact '{artifact_id}' not found in registry."
-            )
+            raise ArtifactNotFoundError(f"Artifact '{artifact_id}' not found in registry.")
         return self._store[artifact_id]
 
     def exists(self, artifact_id: str) -> bool:
@@ -145,17 +146,11 @@ class ArtifactRegistry:
 
     def list_by_type(self, artifact_type: ArtifactType) -> List[Artifact]:
         """List all artifacts matching an ArtifactType."""
-        return [
-            a for a in self._store.values()
-            if a.artifact_type == artifact_type
-        ]
+        return [a for a in self._store.values() if a.artifact_type == artifact_type]
 
     def list_by_project(self, project_id: str) -> List[Artifact]:
         """List all artifacts belonging to a project."""
-        return [
-            a for a in self._store.values()
-            if a.project_id == project_id
-        ]
+        return [a for a in self._store.values() if a.project_id == project_id]
 
     def list_all(self) -> List[Artifact]:
         """Return all registered artifacts."""
@@ -168,9 +163,7 @@ class ArtifactRegistry:
         Raises ArtifactNotFoundError if not found.
         """
         if artifact_id not in self._store:
-            raise ArtifactNotFoundError(
-                f"Artifact '{artifact_id}' not found in registry."
-            )
+            raise ArtifactNotFoundError(f"Artifact '{artifact_id}' not found in registry.")
         return self._store.pop(artifact_id)
 
     def register_listeners(self, bus: Any) -> None:
@@ -198,4 +191,3 @@ class ArtifactRegistry:
     def count(self) -> int:
         """Return the total number of registered artifacts."""
         return len(self._store)
-

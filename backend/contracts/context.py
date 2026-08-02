@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -17,7 +18,7 @@ class ContextSelector(str, Enum):
 class ContextSectionType(str, Enum):
     GOAL = "GOAL"
     UPSTREAM_ARTIFACT = "UPSTREAM_ARTIFACT"
-    ARTIFACT = "ARTIFACT"           # Generic artifact reference
+    ARTIFACT = "ARTIFACT"  # Generic artifact reference
     DIRECTOR_BRIEF = "DIRECTOR_BRIEF"  # DirectorAgent brief artifact
     CHARACTER_BLUEPRINT = "CHARACTER_BLUEPRINT"
     STYLE_GUIDELINES = "STYLE_GUIDELINES"
@@ -27,8 +28,8 @@ class ContextSectionType(str, Enum):
 
 
 class BudgetStrategy(str, Enum):
-    DROP = "DROP"            # Shed section if budget exceeded
-    TRUNCATE = "TRUNCATE"    # Trim section content payload length if budget exceeded
+    DROP = "DROP"  # Shed section if budget exceeded
+    TRUNCATE = "TRUNCATE"  # Trim section content payload length if budget exceeded
     SUMMARIZE = "SUMMARIZE"  # Reserved for future LLM summarization
 
 
@@ -36,6 +37,7 @@ class ContextPolicy(BaseModel):
     """
     Configurable context requirements per agent type.
     """
+
     agent_type: str
     selectors: List[ContextSelector] = Field(
         default_factory=lambda: [
@@ -66,6 +68,7 @@ class ContextSection(BaseModel):
     """
     A single self-contained, typed section of an AgentContext payload.
     """
+
     section_type: ContextSectionType
     title: str
     content: Dict[str, Any] = Field(default_factory=dict)
@@ -78,6 +81,7 @@ class AgentContext(BaseModel):
     Focused, extensible payload prepared by the Context Engine for task execution.
     Supports both section-based M6 payloads and backward-compatible M1 fields.
     """
+
     task_id: str
     project_id: str
     target_agent_type: str
@@ -103,6 +107,4 @@ class AgentContext(BaseModel):
     @property
     def goal_id(self) -> str:
         """Convenience helper to extract goal_id from goal dict or fallback to task_id."""
-        return self.goal.get("goal_id", self.task_id)
-
-
+        return self.goal.get("goal_id", self.task_id)  # type: ignore[no-any-return]

@@ -1,14 +1,9 @@
-from enum import Enum
-from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field
-from datetime import datetime
-
-
-from enum import Enum
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CapabilityType(str, Enum):
@@ -24,6 +19,7 @@ class CapabilityDescriptor(BaseModel):
     """
     Rich metadata describing a provider's execution capabilities for a CapabilityType.
     """
+
     capability_type: CapabilityType
     provider_name: str
     supported_models: List[str] = Field(default_factory=list)
@@ -38,6 +34,7 @@ class ToolRequest(BaseModel):
     """
     Model-agnostic tool request payload dispatched to the Capability Registry.
     """
+
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     capability_type: CapabilityType
     parameters: Dict[str, Any] = Field(default_factory=dict)
@@ -50,6 +47,7 @@ class ToolResponse(BaseModel):
     """
     Standardized response returned by Capability Providers with telemetry and provenance.
     """
+
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     response_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     success: bool
@@ -69,6 +67,7 @@ class ResolvedProvider(BaseModel):
     """
     Pure value object holding the resolved provider instance, selected model, and capability descriptor.
     """
+
     capability_type: CapabilityType
     provider_name: str
     model_name: str
@@ -77,4 +76,3 @@ class ResolvedProvider(BaseModel):
     resolution_strategy: str = "PriorityRoutingStrategy"
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-

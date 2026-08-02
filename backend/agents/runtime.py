@@ -39,18 +39,18 @@ The runtime does NOT own:
     Scheduling logic  → TaskScheduler
     State storage     → ProjectStateEngine
 """
+
 import asyncio
 import time
-from typing import List, Optional
-
-from backend.contracts.task import Task, TaskStatus
-from backend.contracts.agent import AgentResult, BatchResult
-from backend.contracts.event import Event, EventType
-from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
+from typing import List
 
 from backend.agents.agent_registry import AgentRegistry
-from backend.agents.tool_executor import CapabilityToolExecutor, BaseToolExecutor
 from backend.agents.runtime_transaction import RuntimeTransaction, TransactionError
+from backend.agents.tool_executor import BaseToolExecutor, CapabilityToolExecutor
+from backend.contracts.agent import AgentResult, BatchResult
+from backend.contracts.context import AgentContext, ContextSection, ContextSectionType
+from backend.contracts.event import Event, EventType
+from backend.contracts.task import Task, TaskStatus
 
 
 class AgentRuntime:
@@ -64,13 +64,13 @@ class AgentRuntime:
     def __init__(
         self,
         agent_registry: AgentRegistry,
-        capability_registry,          # CapabilityRegistry
-        artifact_registry,            # ArtifactRegistry
-        version_graph,                # VersionGraph
-        task_scheduler,               # TaskScheduler
-        event_bus,                    # EventBus
-        context_engine=None,          # ContextEngine (optional)
-        state_engine=None,            # ProjectStateEngine (optional)
+        capability_registry,  # CapabilityRegistry
+        artifact_registry,  # ArtifactRegistry
+        version_graph,  # VersionGraph
+        task_scheduler,  # TaskScheduler
+        event_bus,  # EventBus
+        context_engine=None,  # ContextEngine (optional)
+        state_engine=None,  # ProjectStateEngine (optional)
     ) -> None:
         self._agent_registry = agent_registry
         self._capability_registry = capability_registry
@@ -122,12 +122,17 @@ class AgentRuntime:
         start_ms = time.monotonic() * 1000
 
         # 1. Announce start and mark task RUNNING if in task registry
-        self._publish(EventType.AGENT_STARTED, {
-            "task_id": task.task_id,
-            "agent_type": task.target_agent_type,
-        })
+        self._publish(
+            EventType.AGENT_STARTED,
+            {
+                "task_id": task.task_id,
+                "agent_type": task.target_agent_type,
+            },
+        )
 
-        if hasattr(self._task_scheduler, "_task_registry") and self._task_scheduler._task_registry.exists(task.task_id):
+        if hasattr(
+            self._task_scheduler, "_task_registry"
+        ) and self._task_scheduler._task_registry.exists(task.task_id):
             registered_task = self._task_scheduler._task_registry.get_task(task.task_id)
             if registered_task.status in (TaskStatus.QUEUED, TaskStatus.SCHEDULED):
                 self._task_scheduler._task_registry.start(task.task_id)
@@ -180,16 +185,20 @@ class AgentRuntime:
             )
         if result.state_updates:
             txn.stage_state_updates(result.state_updates)
-        txn.stage_event(Event(
-            event_type=EventType.AGENT_COMPLETED,
-            source_agent_id=result.agent_id,
-            payload={"task_id": task.task_id, "artifacts": len(result.produced_artifacts)},
-        ))
-        txn.stage_event(Event(
-            event_type=EventType.TASK_COMPLETED,
-            source_agent_id=result.agent_id,
-            payload={"task_id": task.task_id},
-        ))
+        txn.stage_event(
+            Event(
+                event_type=EventType.AGENT_COMPLETED,
+                source_agent_id=result.agent_id,
+                payload={"task_id": task.task_id, "artifacts": len(result.produced_artifacts)},
+            )
+        )
+        txn.stage_event(
+            Event(
+                event_type=EventType.TASK_COMPLETED,
+                source_agent_id=result.agent_id,
+                payload={"task_id": task.task_id},
+            )
+        )
 
         try:
             txn.commit()
@@ -218,16 +227,18 @@ class AgentRuntime:
         for result in results:
             if isinstance(result, Exception):
                 # Wrap unexpected exceptions as failed AgentResult
-                batch.failed.append(AgentResult(
-                    task_id="unknown",
-                    agent_id="unknown",
-                    agent_type="unknown",
-                    success=False,
-                    error_message=str(result),
-                ))
-            elif result.success:
+                batch.failed.append(
+                    AgentResult(
+                        task_id="unknown",
+                        agent_id="unknown",
+                        agent_type="unknown",
+                        success=False,
+                        error_message=str(result),
+                    )
+                )
+            elif isinstance(result, AgentResult) and result.success:
                 batch.successful.append(result)
-            else:
+            elif isinstance(result, AgentResult):
                 batch.failed.append(result)
 
         batch.duration_ms = round(time.monotonic() * 1000 - start_ms, 3)
@@ -244,18 +255,22 @@ class AgentRuntime:
         valid AgentContext from task metadata.
         """
         if self._context_engine is not None:
-            return self._context_engine.build_context(task)
+            return self._context_engine.build_context(task)  # type: ignore[no-any-return]
 
-        project_id = task.payload.get("project_id", "default_project") if task.payload else "default_project"
+        project_id = (
+            task.payload.get("project_id", "default_project") if task.payload else "default_project"
+        )
 
         sections = []
         if task.payload:
-            sections.append(ContextSection(
-                section_type=ContextSectionType.GOAL,
-                title="Goal Payload",
-                content=task.payload,
-                estimated_token_cost=len(str(task.payload)) // 4,
-            ))
+            sections.append(
+                ContextSection(
+                    section_type=ContextSectionType.GOAL,
+                    title="Goal Payload",
+                    content=task.payload,
+                    estimated_token_cost=len(str(task.payload)) // 4,
+                )
+            )
 
         return AgentContext(
             task_id=task.task_id,
@@ -268,15 +283,21 @@ class AgentRuntime:
 
     def _fail_task(self, task: Task, error: str, start_ms: float) -> AgentResult:
         """Publish failure events, notify scheduler, and return failed AgentResult."""
-        self._publish(EventType.AGENT_FAILED, {
-            "task_id": task.task_id,
-            "agent_type": task.target_agent_type,
-            "error": error,
-        })
-        self._publish(EventType.TASK_FAILED, {
-            "task_id": task.task_id,
-            "error": error,
-        })
+        self._publish(
+            EventType.AGENT_FAILED,
+            {
+                "task_id": task.task_id,
+                "agent_type": task.target_agent_type,
+                "error": error,
+            },
+        )
+        self._publish(
+            EventType.TASK_FAILED,
+            {
+                "task_id": task.task_id,
+                "error": error,
+            },
+        )
         self._task_scheduler.mark_failed(task.task_id, error)
         return AgentResult(
             task_id=task.task_id,
@@ -287,11 +308,15 @@ class AgentRuntime:
             execution_time_ms=round(time.monotonic() * 1000 - start_ms, 3),
         )
 
-    def _publish(self, event_type: EventType, payload: dict, project_id: str = "default_project") -> None:
+    def _publish(
+        self, event_type: EventType, payload: dict, project_id: str = "default_project"
+    ) -> None:
         """Publish an event to the EventBus."""
-        self._event_bus.publish(Event(
-            event_type=event_type,
-            project_id=project_id,
-            source_agent_id="agent_runtime",
-            payload=payload,
-        ))
+        self._event_bus.publish(
+            Event(
+                event_type=event_type,
+                project_id=project_id,
+                source_agent_id="agent_runtime",
+                payload=payload,
+            )
+        )

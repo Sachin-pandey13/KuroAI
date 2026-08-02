@@ -4,7 +4,7 @@ scene = {
     "emotion": "loneliness",
     "camera": "wide angle",
     "lighting": "neon rain",
-    "visual_prompt": "a young boy standing alone in a futuristic city street at night"
+    "visual_prompt": "a young boy standing alone in a futuristic city street at night",
 }
 
 composer = PromptComposer()

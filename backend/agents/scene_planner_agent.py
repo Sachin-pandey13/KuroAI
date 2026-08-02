@@ -1,17 +1,18 @@
 import os
 from typing import Optional
+
 from jinja2 import Environment, FileSystemLoader
-from pydantic import ValidationError
 
 from backend.agents.base_agent import BaseAgent
-from backend.contracts.context import AgentContext, ContextSectionType
-from backend.contracts.agent import AgentResult
-from backend.contracts.artifact import Artifact, ArtifactType, ArtifactState
-from backend.contracts.capability import CapabilityType, ToolRequest
-from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
-from backend.agents.tool_executor import BaseToolExecutor
 from backend.agents.output_parser import OutputParser
+from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.artifact import Artifact, ArtifactState, ArtifactType
+from backend.contracts.capability import CapabilityType, ToolRequest
+from backend.contracts.context import AgentContext, ContextSectionType
+from backend.contracts.decision_trace import DecisionTrace, ExecutionProvenance
 from backend.contracts.scene import SceneScript
+
 
 class ScenePlannerAgent(BaseAgent):
     """
@@ -32,12 +33,18 @@ class ScenePlannerAgent(BaseAgent):
         tool_executor: Optional[BaseToolExecutor] = None,
     ) -> AgentResult:
         if tool_executor is None:
-            return AgentResult(task_id=context.task_id, agent_id=self.agent_id, agent_type=self.agent_type, success=False, error_message="No tool executor provided")
+            return AgentResult(
+                task_id=context.task_id,
+                agent_id=self.agent_id,
+                agent_type=self.agent_type,
+                success=False,
+                error_message="No tool executor provided",
+            )
 
         project_id = "default_project"
         story_beat = ""
         parent_artifact_ids = []
-        
+
         for sec in context.sections:
             if sec.section_type == ContextSectionType.ARTIFACT and isinstance(sec.content, dict):
                 # Look for a StoryOutline or StoryBeat
@@ -55,7 +62,7 @@ class ScenePlannerAgent(BaseAgent):
         env = Environment(loader=FileSystemLoader(os.path.join("backend", "prompts")))
         template = env.get_template("scene_script.jinja")
         prompt = template.render(story_beat=story_beat)
-        
+
         prompt += f"\n\nYou MUST return a valid JSON object adhering to this JSON schema:\n{SceneScript.model_json_schema()}"
 
         tool_req = ToolRequest(
@@ -63,26 +70,26 @@ class ScenePlannerAgent(BaseAgent):
             parameters={"prompt": prompt, "temperature": 0.7, "max_tokens": 4096},
         )
         tool_resp = await tool_executor.execute(tool_req)
-        
+
         if not tool_resp or not tool_resp.success:
             return AgentResult(
-                task_id=context.task_id, 
-                agent_id=self.agent_id, 
-                agent_type=self.agent_type, 
-                success=False, 
-                error_message=f"Scene generation failed: {tool_resp.error_message if tool_resp else 'No response'}"
+                task_id=context.task_id,
+                agent_id=self.agent_id,
+                agent_type=self.agent_type,
+                success=False,
+                error_message=f"Scene generation failed: {tool_resp.error_message if tool_resp else 'No response'}",
             )
 
         text_output = tool_resp.output_data.get("text", "")
         scene_script = OutputParser.parse_json(text_output, SceneScript)
-        
+
         if scene_script is None:
             return AgentResult(
                 task_id=context.task_id,
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 success=False,
-                error_message=f"JSON validation error: failed to parse SceneScript from model output."
+                error_message="JSON validation error: failed to parse SceneScript from model output.",
             )
 
         decision_trace = DecisionTrace(

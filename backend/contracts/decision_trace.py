@@ -1,12 +1,14 @@
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class ExecutionProvenance(BaseModel):
     """
     Exact parameter provenance for 100% reproducibility (Second Law).
     """
+
     model_name: str
     provider_name: str
     seed: Optional[int] = None
@@ -21,6 +23,7 @@ class DecisionTrace(BaseModel):
     """
     Structured explainability metadata attached to every agent decision.
     """
+
     agent_id: str
     confidence_score: float = Field(ge=0.0, le=1.0)
     reasoning_rationale: str

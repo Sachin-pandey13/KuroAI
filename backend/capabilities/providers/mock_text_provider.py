@@ -1,12 +1,13 @@
 import time
 from typing import List
+
+from backend.capabilities.providers.base_provider import BaseProvider
 from backend.contracts.capability import (
-    CapabilityType,
     CapabilityDescriptor,
+    CapabilityType,
     ToolRequest,
     ToolResponse,
 )
-from backend.capabilities.providers.base_provider import BaseProvider
 
 
 class MockTextProvider(BaseProvider):
@@ -38,7 +39,9 @@ class MockTextProvider(BaseProvider):
 
     def execute(self, request: ToolRequest) -> ToolResponse:
         """Execute deterministic text generation."""
-        import json, uuid
+        import json
+        import uuid
+
         start_ms = time.monotonic() * 1000
 
         prompt = request.parameters.get("prompt", "")
@@ -49,79 +52,149 @@ class MockTextProvider(BaseProvider):
         # and return a minimal valid JSON payload so Pydantic validation passes.
         if "JSON schema" in prompt or "model_json_schema" in prompt:
             if "StoryOutline" in prompt:
-                generated_text = json.dumps({
-                    "project_id": "mock_project",
-                    "title": "Mock Story Title",
-                    "logline": "A mock story about mocks.",
-                    "beats": [{"beat_id": str(uuid.uuid4()), "title": "Beat 1", "summary": "Something happens.", "emotional_arc": "Neutral", "setting": "A city"}],
-                })
+                generated_text = json.dumps(
+                    {
+                        "project_id": "mock_project",
+                        "title": "Mock Story Title",
+                        "logline": "A mock story about mocks.",
+                        "beats": [
+                            {
+                                "beat_id": str(uuid.uuid4()),
+                                "title": "Beat 1",
+                                "summary": "Something happens.",
+                                "emotional_arc": "Neutral",
+                                "setting": "A city",
+                            }
+                        ],
+                    }
+                )
             elif "CharacterProfile" in prompt:
-                generated_text = json.dumps({
-                    "character_id": str(uuid.uuid4()),
-                    "name": "Mock Character",
-                    "age": "25",
-                    "role": "Protagonist",
-                    "personality": "Brave and curious.",
-                    "backstory": "A humble origin.",
-                    "appearance": {"hair": "Black", "eyes": "Brown", "build": "Athletic", "clothing": "Jacket", "distinguishing_features": "None"},
-                    "relationships": [],
-                })
+                generated_text = json.dumps(
+                    {
+                        "character_id": str(uuid.uuid4()),
+                        "name": "Mock Character",
+                        "age": "25",
+                        "role": "Protagonist",
+                        "personality": "Brave and curious.",
+                        "backstory": "A humble origin.",
+                        "appearance": {
+                            "hair": "Black",
+                            "eyes": "Brown",
+                            "build": "Athletic",
+                            "clothing": "Jacket",
+                            "distinguishing_features": "None",
+                        },
+                        "relationships": [],
+                    }
+                )
             elif "SceneScript" in prompt:
-                generated_text = json.dumps({
-                    "scene_id": str(uuid.uuid4()),
-                    "beat_id": "b1",
-                    "location": "City rooftop",
-                    "time_of_day": "Night",
-                    "panels": [{"panel_number": 1, "setting_details": "Neon lights below", "action": "Hero stands", "characters_present": [], "camera_angle": "Wide shot"}],
-                })
+                generated_text = json.dumps(
+                    {
+                        "scene_id": str(uuid.uuid4()),
+                        "beat_id": "b1",
+                        "location": "City rooftop",
+                        "time_of_day": "Night",
+                        "panels": [
+                            {
+                                "panel_number": 1,
+                                "setting_details": "Neon lights below",
+                                "action": "Hero stands",
+                                "characters_present": [],
+                                "camera_angle": "Wide shot",
+                            }
+                        ],
+                    }
+                )
             elif "MangaPageLayout" in prompt:
-                generated_text = json.dumps({
-                    "page_number": 1,
-                    "total_panels": 2,
-                    "grid_style": "DYNAMIC_ACTION",
-                    "slots": [
-                        {"slot_id": "slot_1", "panel_number": 1, "importance": "ESTABLISHING", "shot_type": "Wide shot", "relative_position": "TOP_FULL", "aspect_ratio_suggestion": "16:9", "visual_description": "Establishing shot"},
-                        {"slot_id": "slot_2", "panel_number": 2, "importance": "ACTION", "shot_type": "Close-up", "relative_position": "BOTTOM_FULL", "aspect_ratio_suggestion": "4:3", "visual_description": "Close up shot"}
-                    ]
-                })
+                generated_text = json.dumps(
+                    {
+                        "page_number": 1,
+                        "total_panels": 2,
+                        "grid_style": "DYNAMIC_ACTION",
+                        "slots": [
+                            {
+                                "slot_id": "slot_1",
+                                "panel_number": 1,
+                                "importance": "ESTABLISHING",
+                                "shot_type": "Wide shot",
+                                "relative_position": "TOP_FULL",
+                                "aspect_ratio_suggestion": "16:9",
+                                "visual_description": "Establishing shot",
+                            },
+                            {
+                                "slot_id": "slot_2",
+                                "panel_number": 2,
+                                "importance": "ACTION",
+                                "shot_type": "Close-up",
+                                "relative_position": "BOTTOM_FULL",
+                                "aspect_ratio_suggestion": "4:3",
+                                "visual_description": "Close up shot",
+                            },
+                        ],
+                    }
+                )
             elif "SceneDialogue" in prompt:
-                generated_text = json.dumps({
-                    "scene_id": str(uuid.uuid4()),
-                    "bubbles": [{"bubble_id": str(uuid.uuid4()), "panel_number": 1, "character_id": None, "dialogue_type": "NARRATION", "text": "The city never sleeps.", "emotion_tag": "Neutral"}],
-                })
+                generated_text = json.dumps(
+                    {
+                        "scene_id": str(uuid.uuid4()),
+                        "bubbles": [
+                            {
+                                "bubble_id": str(uuid.uuid4()),
+                                "panel_number": 1,
+                                "character_id": None,
+                                "dialogue_type": "NARRATION",
+                                "text": "The city never sleeps.",
+                                "emotion_tag": "Neutral",
+                            }
+                        ],
+                    }
+                )
             elif "ReviewFeedback" in prompt:
-                generated_text = json.dumps({
-                    "target_artifact_id": "art_img_1",
-                    "reviewer_agent": "image_review_agent",
-                    "passed": True,
-                    "review_score": 92.5,
-                    "confidence": 0.95,
-                    "issues": []
-                })
+                generated_text = json.dumps(
+                    {
+                        "target_artifact_id": "art_img_1",
+                        "reviewer_agent": "image_review_agent",
+                        "passed": True,
+                        "review_score": 92.5,
+                        "confidence": 0.95,
+                        "issues": [],
+                    }
+                )
             elif "ContinuityReport" in prompt:
-                generated_text = json.dumps({
-                    "project_id": "proj_mock",
-                    "passed": True,
-                    "review_score": 95.0,
-                    "issues": [],
-                    "characters_checked": ["c1"],
-                    "scenes_checked": 2
-                })
+                generated_text = json.dumps(
+                    {
+                        "project_id": "proj_mock",
+                        "passed": True,
+                        "review_score": 95.0,
+                        "issues": [],
+                        "characters_checked": ["c1"],
+                        "scenes_checked": 2,
+                    }
+                )
             elif "ExportManifest" in prompt:
-                generated_text = json.dumps({
-                    "project_id": "proj_export",
-                    "title": "Mock Manga Title",
-                    "total_pages": 1,
-                    "pages": [
-                        {
-                            "page_number": 1,
-                            "grid_style": "DYNAMIC_ACTION",
-                            "panels": [{"panel_number": 1, "image_asset_path": "/assets/panel_1.png", "shot_type": "Wide", "speech_bubbles": []}]
-                        }
-                    ],
-                    "export_format": "PDF_MANIFEST",
-                    "output_pdf_path": "/exports/proj_export_manga.pdf"
-                })
+                generated_text = json.dumps(
+                    {
+                        "project_id": "proj_export",
+                        "title": "Mock Manga Title",
+                        "total_pages": 1,
+                        "pages": [
+                            {
+                                "page_number": 1,
+                                "grid_style": "DYNAMIC_ACTION",
+                                "panels": [
+                                    {
+                                        "panel_number": 1,
+                                        "image_asset_path": "/assets/panel_1.png",
+                                        "shot_type": "Wide",
+                                        "speech_bubbles": [],
+                                    }
+                                ],
+                            }
+                        ],
+                        "export_format": "PDF_MANIFEST",
+                        "output_pdf_path": "/exports/proj_export_manga.pdf",
+                    }
+                )
             else:
                 generated_text = json.dumps({"mock": "response"})
         else:
@@ -157,5 +230,5 @@ class MockTextProvider(BaseProvider):
             },
         )
 
-    def health_check(self) -> bool:
+    def health_check(self, live: bool = False) -> bool:
         return True

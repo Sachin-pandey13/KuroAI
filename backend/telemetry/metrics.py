@@ -2,9 +2,9 @@
 Exporter-agnostic metric primitives and structured event audit.
 """
 
-import time
 import threading
-from typing import Dict, Any, List, Optional, Callable
+import time
+from typing import Any, Dict, List, Optional
 
 
 class MetricExporter:
@@ -19,7 +19,9 @@ class ConsoleExporter(MetricExporter):
 
     def export_metrics(self, metrics_data: List[Dict[str, Any]]) -> None:
         for item in metrics_data:
-            print(f"[METRIC] {item['name']} ({item['type']}): {item['value']} | labels={item.get('labels', {})}")
+            print(
+                f"[METRIC] {item['name']} ({item['type']}): {item['value']} | labels={item.get('labels', {})}"
+            )
 
 
 class JSONExporter(MetricExporter):
@@ -41,9 +43,9 @@ class PrometheusExporter(MetricExporter):
     def export_metrics(self, metrics_data: List[Dict[str, Any]]) -> None:
         formatted = []
         for item in metrics_data:
-            labels_str = ",".join(f'{k}="{v}"' for k, v in item.get('labels', {}).items())
+            labels_str = ",".join(f'{k}="{v}"' for k, v in item.get("labels", {}).items())
             labels_part = f"{{{labels_str}}}" if labels_str else ""
-            name = item['name'].replace('.', '_').replace('-', '_')
+            name = item["name"].replace(".", "_").replace("-", "_")
             formatted.append(f"# TYPE {name} {item['type']}")
             formatted.append(f"{name}{labels_part} {item['value']}")
         self.lines = formatted
@@ -60,12 +62,14 @@ class OpenTelemetryExporter(MetricExporter):
 
     def export_metrics(self, metrics_data: List[Dict[str, Any]]) -> None:
         for item in metrics_data:
-            self.otlp_records.append({
-                "metric_name": item['name'],
-                "type": item['type'],
-                "points": [{"value": item['value'], "time_unix_nano": int(time.time() * 1e9)}],
-                "attributes": item.get('labels', {}),
-            })
+            self.otlp_records.append(
+                {
+                    "metric_name": item["name"],
+                    "type": item["type"],
+                    "points": [{"value": item["value"], "time_unix_nano": int(time.time() * 1e9)}],
+                    "attributes": item.get("labels", {}),
+                }
+            )
 
 
 class Counter:

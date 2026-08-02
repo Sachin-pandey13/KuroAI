@@ -3,18 +3,20 @@ Resilience unit tests — CircuitBreaker, RetryPolicy, RecoveryManager.
 """
 
 import time
+
 import pytest
+
 from backend.resilience import (
     CircuitBreaker,
-    CircuitState,
     CircuitOpenError,
-    RetryPolicy,
+    CircuitState,
     MaxRetriesExceededError,
     RecoveryManager,
+    RetryPolicy,
 )
 
-
 # ─── CircuitBreaker ────────────────────────────────────────────────────────────
+
 
 class TestCircuitBreaker:
     def test_starts_closed(self):
@@ -23,8 +25,10 @@ class TestCircuitBreaker:
 
     def test_opens_after_threshold(self):
         breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=60)
+
         def failing():
             raise RuntimeError("fail")
+
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 breaker.call(failing)
@@ -74,6 +78,7 @@ class TestCircuitBreaker:
 
 # ─── RetryPolicy ───────────────────────────────────────────────────────────────
 
+
 class TestRetryPolicy:
     def test_succeeds_on_first_try(self):
         policy = RetryPolicy(max_retries=3, base_delay=0)
@@ -82,6 +87,7 @@ class TestRetryPolicy:
 
     def test_retries_and_succeeds(self):
         attempt_counter = {"count": 0}
+
         def flaky():
             attempt_counter["count"] += 1
             if attempt_counter["count"] < 3:
@@ -100,6 +106,7 @@ class TestRetryPolicy:
 
 
 # ─── RecoveryManager ───────────────────────────────────────────────────────────
+
 
 class TestRecoveryManager:
     def test_checkpoint_save_and_restore(self):

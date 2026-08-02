@@ -1,5 +1,6 @@
-from inference.image_generator import ImageGenerator
 import os
+
+from inference.image_generator import ImageGenerator
 
 
 def test_image_generation_pipeline():
@@ -10,7 +11,7 @@ def test_image_generation_pipeline():
         "panel": 1,
         "prompt": "dark cyberpunk city",
         "layout": "wide",
-        "style_anchor": "kuroai_manga_v1"
+        "style_anchor": "kuroai_manga_v1",
     }
 
     result = gen.generate(panel)

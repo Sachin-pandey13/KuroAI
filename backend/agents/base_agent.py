@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from backend.contracts.context import AgentContext
-from backend.contracts.agent import AgentResult
+
 from backend.agents.tool_executor import BaseToolExecutor
+from backend.contracts.agent import AgentResult
+from backend.contracts.context import AgentContext
 
 
 class BaseAgent(ABC):
