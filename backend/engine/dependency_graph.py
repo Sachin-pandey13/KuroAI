@@ -189,21 +189,29 @@ class DependencyGraph:
         # Remove the node
         del self._nodes[artifact_id]
 
-    def add_edge(self, edge: DependencyEdge) -> None:
+    def add_edge(self, edge: Any, tgt: Optional[str] = None) -> None:
         """
         Add a directed edge: source -> target.
         Validates that both nodes exist and that adding the edge will not create a cycle.
         Raises CycleDetectedError if a cycle is formed.
+        Accepts either a DependencyEdge instance or (source_id, target_id) strings.
         """
-        src = edge.source_artifact_id
-        tgt = edge.target_artifact_id
+        if isinstance(edge, DependencyEdge):
+            src = edge.source_artifact_id
+            target = edge.target_artifact_id
+        elif isinstance(edge, str) and tgt is not None:
+            src = edge
+            target = tgt
+        else:
+            src = getattr(edge, "source_artifact_id", str(edge))
+            target = tgt or getattr(edge, "target_artifact_id", "")
 
         if src not in self._nodes:
             raise NodeNotFoundError(f"Source node '{src}' not found in graph.")
-        if tgt not in self._nodes:
-            raise NodeNotFoundError(f"Target node '{tgt}' not found in graph.")
+        if target not in self._nodes:
+            raise NodeNotFoundError(f"Target node '{target}' not found in graph.")
 
-        edge_tuple = (src, tgt)
+        edge_tuple = (src, target)
         if edge_tuple in self._edges:
             return  # Edge already exists
 
@@ -217,10 +225,10 @@ class DependencyGraph:
 
         # Edge is valid: record metadata and update node relationship pointers
         self._edge_metadata[edge_tuple] = edge
-        if tgt not in self._nodes[src].downstream_ids:
-            self._nodes[src].downstream_ids.append(tgt)
-        if src not in self._nodes[tgt].upstream_ids:
-            self._nodes[tgt].upstream_ids.append(src)
+        if target not in self._nodes[src].downstream_ids:
+            self._nodes[src].downstream_ids.append(target)
+        if src not in self._nodes[target].upstream_ids:
+            self._nodes[target].upstream_ids.append(src)
 
     def connect(self, source_id: str, target_id: str,
                 edge_type: EdgeType = EdgeType.EXPLICIT) -> None:

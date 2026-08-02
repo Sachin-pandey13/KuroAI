@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Any
+from typing import Callable, Dict, List, Any, Optional
 from datetime import datetime
 from backend.contracts.event import Event, EventType, EventLog
 
@@ -44,17 +44,23 @@ class EventBus:
         if event_type in self._listeners:
             self._listeners[event_type] = [l for l in self._listeners[event_type] if l != listener]
 
-    def publish(self, event: Event) -> None:
+    def publish(self, event: Any, payload: Optional[Any] = None) -> None:
         """
         Emit an event to all registered listeners in FIFO order.
         Collects errors across all listeners and raises EventDeliveryError at completion if any failed.
+        Accepts either an Event instance or (event_type, payload).
         """
-        listeners = list(self._listeners.get(event.event_type, []))
+        if isinstance(event, Event):
+            event_obj = event
+        else:
+            event_obj = Event(event_type=event, payload=payload or {})
+
+        listeners = list(self._listeners.get(event_obj.event_type, []))
         errors: List[str] = []
 
         for listener in listeners:
             try:
-                listener(event)
+                listener(event_obj)
             except Exception as e:
                 errors.append(str(e))
 

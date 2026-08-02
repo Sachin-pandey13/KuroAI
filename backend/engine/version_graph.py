@@ -42,6 +42,10 @@ class VersionGraph:
     # Stage 2 — Version Graph Core Operations
     # ------------------------------------------------------------------
 
+    def add_version(self, artifact_id: str, version: int = 1, content_hash: str = "") -> VersionEntry:
+        """Public API Alias for record_version."""
+        return self.record_version(artifact_id, {"content_hash": content_hash}, {"version": version})
+
     def record_version(
         self,
         artifact_id: str,
